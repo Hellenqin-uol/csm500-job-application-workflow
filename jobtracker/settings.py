@@ -128,3 +128,8 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# Add Django default login methods
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "applications:home" # change later
+LOGOUT_REDIRECT_URL = "login"
