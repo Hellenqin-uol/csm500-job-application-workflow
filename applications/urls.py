@@ -5,4 +5,5 @@ app_name = "applications"
 
 urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
+    path("applications/new/", views.JobApplicationCreateView.as_view(), name="application_create"),
 ]

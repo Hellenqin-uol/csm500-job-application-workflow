@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
-
+from applications.models import JobApplication
 
 class BootstrapAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
@@ -44,3 +44,57 @@ class BootstrapUserCreationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ("username", "password1", "password2")
+
+class JobApplicationForm(forms.ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = [
+            "company_name",
+            "job_title",
+            "job_url",
+            "contact_email",
+            "status",
+            "application_deadline",
+            "notes",
+        ]
+
+        widgets = {
+            "company_name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "e.g. Example Ltd.",
+            }),
+            "job_title": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "e.g. Frontend Developer",
+            }),
+            "job_url": forms.URLInput(attrs={
+                "class": "form-control",
+                "placeholder": "https://example.com/job",
+            }),
+            "contact_email": forms.EmailInput(attrs={
+                "class": "form-control",
+                "placeholder": "jobs@example.com",
+            }),
+            "status": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "application_deadline": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "notes": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Optional notes about this job description",
+            }),
+        }
+
+        labels = {
+            "company_name": "Company",
+            "job_title": "Job title",
+            "job_url": "Job advert URL",
+            "contact_email": "Contact email",
+            "status": "Status",
+            "application_deadline": "Application deadline",
+            "notes": "Notes",
+        }
