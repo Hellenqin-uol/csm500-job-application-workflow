@@ -17,11 +17,11 @@ from django.views.generic import DetailView, UpdateView, DeleteView
 class RegisterView(CreateView):
     form_class = BootstrapUserCreationForm
     template_name = "registration/register.html"
-    success_url = reverse_lazy("applications:home")
+    success_url = reverse_lazy("applications:kanban")
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("applications:home")
+            return redirect("applications:kanban")
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -30,19 +30,6 @@ class RegisterView(CreateView):
         login(self.request, self.object)
 
         return response
-
-# test view, will be replaced later by kanban board
-class HomeView(LoginRequiredMixin, TemplateView):
-    template_name = "applications/home.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context["applications"] = JobApplication.objects.filter(
-            user=self.request.user
-        )
-
-        return context    
     
 class KanbanBoardView(LoginRequiredMixin, TemplateView):
     template_name = "applications/kanban.html"
@@ -85,7 +72,7 @@ class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVi
     model = JobApplication
     form_class = JobApplicationForm
     template_name = "applications/job_application_form.html"
-    success_url = reverse_lazy("applications:home")
+    success_url = reverse_lazy("applications:kanban")
     success_message = "Application '%(job_title)s' was created successfully."
 
     def form_valid(self, form):
@@ -105,7 +92,7 @@ class JobApplicationUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateVi
     form_class = JobApplicationForm
     template_name = "applications/job_application_form.html"
     context_object_name = "application"
-    success_url = reverse_lazy("applications:home")
+    success_url = reverse_lazy("applications:kanban")
     success_message = "Application '%(job_title)s' was updated successfully."
 
     def get_queryset(self):
@@ -116,7 +103,7 @@ class JobApplicationDeleteView(LoginRequiredMixin, DeleteView):
     model = JobApplication
     template_name = "applications/job_application_confirm_delete.html"
     context_object_name = "application"
-    success_url = reverse_lazy("applications:home")
+    success_url = reverse_lazy("applications:kanban")
 
     def get_queryset(self):
         return JobApplication.objects.filter(user=self.request.user)

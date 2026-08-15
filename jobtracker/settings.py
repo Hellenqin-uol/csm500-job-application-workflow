@@ -131,5 +131,5 @@ MAILERS = {
 
 # Add Django default login methods
 LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "applications:home" # change later
+LOGIN_REDIRECT_URL = "applications:kanban"
 LOGOUT_REDIRECT_URL = "login"
