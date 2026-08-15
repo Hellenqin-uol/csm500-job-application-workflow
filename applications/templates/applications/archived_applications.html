@@ -1,0 +1,162 @@
+{% extends "base.html" %}{% load application_tags %}
+
+{% block title %}
+  Archived Applications - Job Tracker
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+      <div>
+        <h1 class="h2 mb-1">Archived Applications</h1>
+        <p class="text-muted mb-0">Applications removed from the active workflow board.</p>
+      </div>
+
+      <a href="{% url 'applications:kanban' %}" class="btn btn-outline-secondary">Back to board</a>
+    </div>
+
+    <form method="get" class="mb-4">
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-md-6 col-lg-5">
+          <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by company or job title" />
+        </div>
+
+        <div class="col-auto">
+          <button type="submit" class="btn btn-outline-primary">Search</button>
+        </div>
+
+        {% if query %}
+          <div class="col-auto">
+            <a href="{% url 'applications:archived_applications' %}" class="btn btn-outline-secondary">Clear</a>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if query %}
+        <div class="form-text mt-2">
+          Showing archived applications matching "<strong>{{ query }}</strong>".
+        </div>
+      {% endif %}
+    </form>
+
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Job title</th>
+              <th scope="col">Company</th>
+              <th scope="col">Deadline</th>
+              <th scope="col">Updated</th>
+              <th scope="col" class="text-end">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for application in applications %}
+              <tr>
+                <td>
+                  <strong>{{ application.job_title }}</strong>
+
+                  {% if application.job_url %}
+                    <div class="small">
+                      <a href="{{ application.job_url }}" target="_blank">Job advert</a>
+                    </div>
+                  {% endif %}
+                </td>
+
+                <td>{{ application.company_name }}</td>
+
+                <td>
+                  {% if application.application_deadline %}
+                    {{ application.application_deadline }}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <span class="text-muted">{{ application.updated_at|date:'Y-m-d H:i' }}</span>
+                </td>
+
+                <td class="text-end">
+                  <a href="{% url 'applications:application_detail' application.id %}" class="btn btn-sm btn-outline-primary">Details</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-muted">No archived applications found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <nav class="mt-4" aria-label="Archived applications pagination">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link"
+                href="?page=1{% if query %}
+                  &q={{ query|urlencode }}
+                {% endif %}">
+                First
+              </a>
+            </li>
+
+            <li class="page-item">
+              <a class="page-link"
+                href="?page={{ page_obj.previous_page_number }}{% if query %}
+                  &q={{ query|urlencode }}
+                {% endif %}">
+                Previous
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">First</span>
+            </li>
+
+            <li class="page-item disabled">
+              <span class="page-link">Previous</span>
+            </li>
+          {% endif %}
+
+          <li class="page-item active" aria-current="page">
+            <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+          </li>
+
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link"
+                href="?page={{ page_obj.next_page_number }}{% if query %}
+                  &q={{ query|urlencode }}
+                {% endif %}">
+                Next
+              </a>
+            </li>
+
+            <li class="page-item">
+              <a class="page-link"
+                href="?page={{ page_obj.paginator.num_pages }}{% if query %}
+                  &q={{ query|urlencode }}
+                {% endif %}">
+                Last
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">Next</span>
+            </li>
+
+            <li class="page-item disabled">
+              <span class="page-link">Last</span>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </div>
+{% endblock %}

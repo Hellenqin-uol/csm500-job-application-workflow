@@ -2,9 +2,8 @@ from django.db import models
 from django.conf import settings
 
 # -------------------------------------------------------------------
-#  JobApplication holds the applications per User
+# JobApplication holds the applications per User
 # -------------------------------------------------------------------
-
 class JobApplication(models.Model):
     class Status(models.TextChoices):
         INTERESTED = "interested", "Interested"
@@ -51,3 +50,27 @@ class JobApplication(models.Model):
 
     def __str__(self):
         return f"{self.job_title} at {self.company_name}"
+
+# -------------------------------------------------------------------
+# for the reminder logic and UI some columns mark the final
+# state of an application, collect them for filtering
+# active means reminders on
+# -------------------------------------------------------------------    
+VISIBLE_BOARD_STATES = (
+    JobApplication.Status.INTERESTED,
+    JobApplication.Status.PREPARING,
+    JobApplication.Status.APPLIED,
+    JobApplication.Status.WAITING_FOR_REPLY,
+    JobApplication.Status.INTERVIEW_SCHEDULED,
+    JobApplication.Status.INTERVIEW_COMPLETED,
+    JobApplication.Status.WAITING_FOR_DECISION,
+    JobApplication.Status.OFFER_RECEIVED,
+    JobApplication.Status.REJECTED,
+    JobApplication.Status.WITHDRAWN,
+)
+
+NO_REMINDER_STATES = (
+    JobApplication.Status.REJECTED,
+    JobApplication.Status.WITHDRAWN,
+    JobApplication.Status.ARCHIVED,
+)
