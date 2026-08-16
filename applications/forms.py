@@ -53,7 +53,6 @@ class JobApplicationForm(forms.ModelForm):
             "job_title",
             "job_url",
             "contact_email",
-            "status",
             "application_deadline",
             "notes",
         ]
@@ -74,9 +73,6 @@ class JobApplicationForm(forms.ModelForm):
             "contact_email": forms.EmailInput(attrs={
                 "class": "form-control",
                 "placeholder": "jobs@example.com",
-            }),
-            "status": forms.Select(attrs={
-                "class": "form-select",
             }),
             "application_deadline": forms.DateInput(attrs={
                 "class": "form-control",

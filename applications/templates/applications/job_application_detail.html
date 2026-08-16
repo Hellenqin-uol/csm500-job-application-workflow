@@ -54,6 +54,18 @@
           <dt class="col-sm-3">Application deadline</dt>
           <dd class="col-sm-9">{{ application.application_deadline|default:'Not provided' }}</dd>
 
+          <dt class="col-sm-3">Applied at</dt>
+          <dd class="col-sm-9">{{ application.applied_at|default:'Not provided' }}</dd>          
+
+          <dt class="col-sm-3">Interview at</dt>
+          <dd class="col-sm-9">{{ application.interview_at|default:'Not provided' }}</dd>  
+
+          <dt class="col-sm-3">Interview completed at</dt>
+          <dd class="col-sm-9">{{ application.interview_completed_at|default:'Not provided' }}</dd>            
+
+          <dt class="col-sm-3">Offer deadline</dt>
+          <dd class="col-sm-9">{{ application.offer_deadline|default:'Not provided' }}</dd>        
+
           <dt class="col-sm-3">Notes</dt>
           <dd class="col-sm-9">
             {% if application.notes %}
@@ -108,12 +120,12 @@
             {% if event.old_status or event.new_status %}
               <div class="small mt-1">
                 {% if event.old_status %}
-                  <span class="badge bg-secondary">{{ event.old_status | status_label }}</span>
+                  <span class="badge {{ event.old_status|status_badge_class }}">{{ event.old_status | status_label }}</span>
                 {% endif %}
 
                 {% if event.new_status %}
                   <i class="bi bi-arrow-right"></i>
-                  <span class="badge bg-primary">{{ event.new_status | status_label }}</span>
+                  <span class="badge {{ event.new_status|status_badge_class }}">{{ event.new_status | status_label }}</span>
                 {% endif %}
               </div>
             {% endif %}
@@ -124,6 +136,6 @@
       </div>
     </div>
 
-    <a href="{% url 'applications:kanban' %}" class="btn btn-outline-secondary">Back</a>
+    <a href="{% url 'applications:kanban' %}" class="btn btn-outline-secondary mt-3">Back</a>
   </div>
 {% endblock %}

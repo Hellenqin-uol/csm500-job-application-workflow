@@ -8,6 +8,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import login
 from django.contrib import messages
 from django.http import JsonResponse
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 import json
 from .models import JobApplication, VISIBLE_BOARD_STATES, ApplicationEvent
@@ -78,6 +79,10 @@ class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVi
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+        form.instance.status = JobApplication.Status.INTERESTED
+
+        # save application
+        response = super().form_valid(form)
 
         # add to event log
         ApplicationEvent.objects.create(
@@ -90,7 +95,7 @@ class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVi
             )
         )
 
-        return super().form_valid(form)
+        return response
     
 class JobApplicationDetailView(LoginRequiredMixin, DetailView):
     model = JobApplication
@@ -112,14 +117,8 @@ class JobApplicationUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateVi
         return JobApplication.objects.filter(user=self.request.user)
     
     def form_valid(self, form):
-        application = self.object
 
-        old_status = application.status
-        new_status = form.cleaned_data["status"]
-        # do not change status in the form save as it is handled by the central 
-        # status change logic later
-        form.instance.status = old_status
-
+        # never do status change here in this view, this is handled by kanban board
         changed_fields = form.changed_data
         other_changed_fields = [
             self.object._meta.get_field(field).verbose_name
@@ -127,10 +126,6 @@ class JobApplicationUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateVi
         ]  
         # save form wihtout state change
         response = super().form_valid(form)    
-
-        # handle state change, special business logic
-        if new_status != old_status:
-            change_application_status(application, new_status)
 
         # log all other field changes
         if other_changed_fields:
@@ -209,7 +204,28 @@ class JobApplicationStatusUpdateView(LoginRequiredMixin, View):
         old_status = application.status
 
         if old_status != new_status:
-            change_application_status(application, new_status)
+            transition_data = {
+                    "applied_at": payload.get("applied_at"),
+                    "interview_at": payload.get("interview_at"),
+                    "interview_completed_at": payload.get("interview_completed_at"),
+                    "offer_deadline": payload.get("offer_deadline"),
+            }
+
+            try:
+                application = change_application_status(
+                    application=application,
+                    new_status=new_status,
+                    transition_data=transition_data,
+                )
+            except ValidationError as error:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "error": error.messages[0] if error.messages else str(error),
+                    },
+                    status=400
+                )
+
             #FIXME later call reminder logic here
 
             messages.success(

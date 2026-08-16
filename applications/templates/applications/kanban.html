@@ -57,7 +57,28 @@
               <span class="badge bg-secondary">{{ column.applications|length }}</span>
             </div>
 
-            <div class="card-body bg-light kanban-column" data-status="{{ column.status }}" style="min-height: 300px;">
+            <div class="card-body bg-light kanban-column" style="min-height: 300px;"
+             data-status="{{ column.status }}" 
+            {% if column.status == "applied" %}
+              data-transition-field="applied_at"
+              data-transition-label="Applied at"
+              data-transition-input-type="date"
+              data-transition-default-today="true"
+            {% elif column.status == "interview_scheduled" %}
+              data-transition-field="interview_at"
+              data-transition-label="Interview date and time"
+              data-transition-input-type="datetime-local"
+            {% elif column.status == "interview_completed" %}
+              data-transition-field="interview_completed_at"
+              data-transition-label="Interview completed at"
+              data-transition-input-type="date"
+              data-transition-default-today="true"
+            {% elif column.status == "offer_received" %}
+              data-transition-field="offer_deadline"
+              data-transition-label="Offer deadline"
+              data-transition-input-type="date"
+            {% endif %}
+             >
               {% for application in column.applications %}
                 <div class="card mb-3 kanban-card" data-application-id="{{ application.id }}" data-update-url="{% url 'applications:application_update_status' application.id %}">
                   <div class="card-body p-3">
@@ -132,6 +153,30 @@
       </div>
     </div>
   </div>
+
+  <div class="modal fade" id="stateTransitionModal" tabindex="-1" aria-labelledby="stateTransitionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="stateTransitionModalLabel">Additional information required</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">This workflow state requires an additional date for tracking and reminders.</p>
+          <div class="mb-3">
+            <label id="stateTransitionFieldLabel" class="form-label"></label>
+            <input type="date" id="stateTransitionDateInput" class="form-control d-none">
+            <input type="datetime-local" id="stateTransitionDateTimeInput" class="form-control d-none">
+            <div class="invalid-feedback d-block d-none" id="stateTransitionError">Please provide the required value.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"> Cancel</button>
+          <button type="button" class="btn btn-primary" id="stateTransitionSaveButton">Save transition</button>
+        </div>
+      </div>
+    </div>
+  </div> 
 
   <script src="{% static 'js/Sortable.min.js' %}"></script>
 
