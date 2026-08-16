@@ -24,23 +24,23 @@ class JobApplication(models.Model):
         related_name="applications"
     )
 
-    company_name = models.CharField(max_length=255)
-    job_title = models.CharField(max_length=255)
-    job_url = models.URLField(blank=True)
-    contact_email = models.EmailField(blank=True)
+    company_name = models.CharField(max_length=255, verbose_name="Company")
+    job_title = models.CharField(max_length=255, verbose_name="Job title")
+    job_url = models.URLField(blank=True, verbose_name="Job URL")
+    contact_email = models.EmailField(blank=True, verbose_name="Contact email")
 
-    status = models.CharField(max_length=40, choices=Status.choices, default=Status.INTERESTED)
+    status = models.CharField(max_length=40, choices=Status.choices, default=Status.INTERESTED, verbose_name="Status")
 
-    application_deadline = models.DateField(null=True, blank=True)
-    applied_at = models.DateField(null=True, blank=True)
-    interview_at = models.DateTimeField(null=True, blank=True)
-    interview_completed_at = models.DateField(null=True, blank=True)
-    offer_deadline = models.DateField(null=True, blank=True)
+    application_deadline = models.DateField(null=True, blank=True, verbose_name="Application deadline")
+    applied_at = models.DateField(null=True, blank=True, verbose_name="Applied at")
+    interview_at = models.DateTimeField(null=True, blank=True, verbose_name="Interview at")
+    interview_completed_at = models.DateField(null=True, blank=True, verbose_name="Interview completed at")
+    offer_deadline = models.DateField(null=True, blank=True, verbose_name="Offer deadline")
 
-    notes = models.TextField(blank=True)
+    notes = models.TextField(blank=True, verbose_name="Notes")
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
 
     class Meta:
         ordering = ["-updated_at"]
@@ -50,6 +50,45 @@ class JobApplication(models.Model):
 
     def __str__(self):
         return f"{self.job_title} at {self.company_name}"
+
+# -------------------------------------------------------------------
+# This is the Event log of the job application
+# whenever it is moved along the kanban board or
+# reminder are generaed, en entry will appear here
+# -------------------------------------------------------------------
+class ApplicationEvent(models.Model):
+    class EventType(models.TextChoices):
+        CREATED = "created", "Created"
+        STATUS_CHANGED = "status_changed", "Status changed"
+        UPDATED = "updated", "Updated"
+        ARCHIVED = "archived", "Archived"
+        DELETED = "deleted", "Deleted"
+        REMINDER_CREATED = "reminder_created", "Reminder created"
+        REMINDER_COMPLETED = "reminder_completed", "Reminder completed"
+
+    application = models.ForeignKey(
+        JobApplication,
+        on_delete=models.CASCADE,
+        related_name="events"
+    )
+
+    event_type = models.CharField(
+        max_length=50,
+        choices=EventType.choices
+    )
+
+    old_status = models.CharField(max_length=40, blank=True)
+    new_status = models.CharField(max_length=40, blank=True)
+
+    description = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_event_type_display()} for {self.application}"
 
 # -------------------------------------------------------------------
 # for the reminder logic and UI some columns mark the final

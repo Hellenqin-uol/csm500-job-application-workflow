@@ -10,8 +10,9 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
 import json
-from .models import JobApplication, VISIBLE_BOARD_STATES
+from .models import JobApplication, VISIBLE_BOARD_STATES, ApplicationEvent
 from django.views.generic import DetailView, UpdateView, DeleteView
+from .services import change_application_status
 
 # User Registration view
 class RegisterView(CreateView):
@@ -77,6 +78,18 @@ class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVi
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+
+        # add to event log
+        ApplicationEvent.objects.create(
+            application=self.object,
+            event_type=ApplicationEvent.EventType.CREATED,
+            new_status=self.object.status,
+            description=(
+                f"Application created with status "
+                f"{self.object.get_status_display()}."
+            )
+        )
+
         return super().form_valid(form)
     
 class JobApplicationDetailView(LoginRequiredMixin, DetailView):
@@ -97,6 +110,36 @@ class JobApplicationUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateVi
 
     def get_queryset(self):
         return JobApplication.objects.filter(user=self.request.user)
+    
+    def form_valid(self, form):
+        application = self.object
+
+        old_status = application.status
+        new_status = form.cleaned_data["status"]
+        # do not change status in the form save as it is handled by the central 
+        # status change logic later
+        form.instance.status = old_status
+
+        changed_fields = form.changed_data
+        other_changed_fields = [
+            self.object._meta.get_field(field).verbose_name
+            for field in changed_fields if field != "status"
+        ]  
+        # save form wihtout state change
+        response = super().form_valid(form)    
+
+        # handle state change, special business logic
+        if new_status != old_status:
+            change_application_status(application, new_status)
+
+        # log all other field changes
+        if other_changed_fields:
+            ApplicationEvent.objects.create(
+                application=self.object,
+                event_type=ApplicationEvent.EventType.UPDATED,
+                description=f"Application entry updated: {', '.join(other_changed_fields)}.",
+            )        
+        return response
 
 
 class JobApplicationDeleteView(LoginRequiredMixin, DeleteView):
@@ -154,8 +197,7 @@ class JobApplicationStatusUpdateView(LoginRequiredMixin, View):
         old_status = application.status
 
         if old_status != new_status:
-            application.status = new_status
-            application.save()
+            change_application_status(application, new_status)
             #FIXME later call reminder logic here
 
             messages.success(
@@ -207,6 +249,14 @@ class ArchiveJobApplicationView(LoginRequiredMixin, View):
         application.status = JobApplication.Status.ARCHIVED
         application.save()
         #FIMXE stop all reminders later here
+
+        ApplicationEvent.objects.create(
+            application=self.object,
+            event_type=ApplicationEvent.EventType.ARCHIVED,
+            description=(
+                f"Application entry archived."
+            )
+        )
 
         messages.success(
             request,

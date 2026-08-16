@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load application_tags %}
 
 {% block title %}
   Application Details
@@ -15,10 +16,12 @@
       <div class="btn-group">
         <a href="{% url 'applications:application_update' application.id %}" class="btn btn-outline-primary">Edit</a>
         <a href="{% url 'applications:application_delete' application.id %}" class="btn btn-outline-danger">Delete</a>
-        <form method="post" action="{% url 'applications:application_archive' application.id %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-outline-secondary">Archive</button>
-        </form>
+        {% if application.status != 'archived' %}
+          <form method="post" action="{% url 'applications:application_archive' application.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary">Archive</button>
+          </form>
+        {% endif %}
       </div>
     </div>
 
@@ -84,6 +87,40 @@
             </dl>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-header">Application history</div>
+
+      <div class="card-body">
+        {% for event in application.events.all %}
+          <div class="border-start border-3 ps-3 mb-3">
+            <div class="d-flex justify-content-between">
+              <strong>{{ event.get_event_type_display }}</strong>
+              <span class="text-muted small">{{ event.created_at|date:'Y-m-d H:i' }}</span>
+            </div>
+
+            {% if event.description %}
+              <div class="text-muted">{{ event.description }}</div>
+            {% endif %}
+
+            {% if event.old_status or event.new_status %}
+              <div class="small mt-1">
+                {% if event.old_status %}
+                  <span class="badge bg-secondary">{{ event.old_status | status_label }}</span>
+                {% endif %}
+
+                {% if event.new_status %}
+                  <i class="bi bi-arrow-right"></i>
+                  <span class="badge bg-primary">{{ event.new_status | status_label }}</span>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        {% empty %}
+          <p class="text-muted mb-0">No history recorded yet.</p>
+        {% endfor %}
       </div>
     </div>
 

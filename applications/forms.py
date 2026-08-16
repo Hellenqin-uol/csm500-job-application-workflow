@@ -88,13 +88,3 @@ class JobApplicationForm(forms.ModelForm):
                 "placeholder": "Optional notes about this job description",
             }),
         }
-
-        labels = {
-            "company_name": "Company",
-            "job_title": "Job title",
-            "job_url": "Job advert URL",
-            "contact_email": "Contact email",
-            "status": "Status",
-            "application_deadline": "Application deadline",
-            "notes": "Notes",
-        }

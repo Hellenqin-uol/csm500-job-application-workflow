@@ -1,5 +1,5 @@
 from django import template
-
+from applications.models import JobApplication
 register = template.Library()
 
 
@@ -38,3 +38,7 @@ def status_header_class(status):
 @register.filter
 def status_badge_class(status):
     return STATUS_BADGE_CLASSES.get(status, "bg-secondary")
+
+@register.filter
+def status_label(value):
+    return dict(JobApplication.Status.choices).get(value, value)
