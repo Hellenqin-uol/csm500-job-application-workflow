@@ -4,7 +4,7 @@ from django.db import transaction
 
 # this is the event logging and status change function of job applications
 @transaction.atomic
-def change_application_status(application : JobApplication, new_status : str):
+def change_application_status(application : JobApplication, new_status : str) -> JobApplication:
     old_status = application.status
 
     if old_status == new_status:

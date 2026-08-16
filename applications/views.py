@@ -162,6 +162,17 @@ class JobApplicationDeleteView(LoginRequiredMixin, DeleteView):
     
  # this AJAX method handles the drag and drop actions on the kanban board
 class JobApplicationStatusUpdateView(LoginRequiredMixin, View):
+
+    def handle_no_permission(self):
+        # return 401 on ajax requests
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'error': 'permission denied'}, 
+                status=401
+            )
+        # other request return the default redirect logic from django
+        return super().handle_no_permission()
+    
     def post(self, request, pk):
         try:
             payload = json.loads(request.body.decode("utf-8"))
@@ -170,6 +181,7 @@ class JobApplicationStatusUpdateView(LoginRequiredMixin, View):
                 "success": False,
                 "error": "Invalid JSON."
             }, status=400)
+        
 
         new_status = payload.get("status")
 

@@ -36,15 +36,21 @@ document.querySelectorAll('.kanban-column').forEach(function (column) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest' 
         },
         body: JSON.stringify({
             status: newStatus
         })
         })
         .then((response) => {
+            if (response.status === 401) {
+                window.location.href = `/account/login/?next=${encodeURIComponent(window.location.pathname)}`;
+                throw new Error('AUTH_REDIRECT'); 
+            }
+
             if (!response.ok) {
-            throw new Error('Status update failed.')
+                throw new Error('Status update failed.')
             }
             return response.json()
         })
@@ -57,6 +63,9 @@ document.querySelectorAll('.kanban-column').forEach(function (column) {
             }
         })
         .catch((error) => {
+            if (error.message === 'AUTH_REDIRECT') {
+                return;
+            }
             alert(error.message)
             window.location.reload()
         })
