@@ -1,8 +1,9 @@
 from django.utils import timezone
-from .models import JobApplication, ApplicationEvent
+from applications.models import JobApplication, ApplicationEvent
 from django.db import transaction
 from django.utils.dateparse import parse_date, parse_datetime
 from django.core.exceptions import ValidationError
+from applications.services.reminders import cancel_open_rule_based_reminders, generate_reminders_for_application
 
 # helpfer function for parse dates
 def parse_required_date(value, field_label):
@@ -37,6 +38,8 @@ def change_application_status(application : JobApplication, new_status : str, tr
 
     if new_status not in valid_statuses:
         raise ValueError("Invalid status")
+    
+    cancel_open_rule_based_reminders(application)
 
     application.status = new_status
 
@@ -97,5 +100,7 @@ def change_application_status(application : JobApplication, new_status : str, tr
             f"{JobApplication.Status(new_status).label}."
         )
     )
+
+    generate_reminders_for_application(application)
 
     return application

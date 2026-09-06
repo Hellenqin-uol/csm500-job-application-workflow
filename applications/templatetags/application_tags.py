@@ -4,31 +4,30 @@ register = template.Library()
 
 
 STATUS_HEADER_CLASSES = {
-    "interested": "bg-secondary text-white",
-    "preparing": "bg-info text-dark",
-    "applied": "bg-primary text-white",
-    "waiting_for_reply": "bg-warning text-dark",
-    "interview_scheduled": "bg-success text-white",
-    "interview_completed": "bg-success text-white",
-    "waiting_for_decision": "bg-warning text-dark",
-    "offer_received": "bg-dark text-white",
-    "rejected": "bg-danger text-white",
-    "withdrawn": "bg-secondary text-white",
-    "archived": "bg-dark text-white",
+    "interested": "bg-secondary-subtle text-dark",
+    "preparing": "bg-info-subtle text-dark",
+    "applied": "bg-primary-subtle text-dark",
+    "waiting_for_reply": "bg-warning-subtle text-dark",
+    "interview_scheduled": "bg-success-subtle text-dark",
+    "interview_completed": "bg-success-subtle text-dark",
+    "waiting_for_decision": "bg-warning-subtle text-dark",
+    "offer_received": "bg-success-subtle text-dark",
+    "rejected": "bg-danger-subtle text-dark",
+    "withdrawn": "bg-secondary-subtle text-dark",
 }
 
 STATUS_BADGE_CLASSES = {
-    "interested": "bg-secondary",
-    "preparing": "bg-info text-dark",
-    "applied": "bg-primary",
-    "waiting_for_reply": "bg-warning text-dark",
-    "interview_scheduled": "bg-success",
-    "interview_completed": "bg-success",
-    "waiting_for_decision": "bg-warning text-dark",
-    "offer_received": "bg-dark",
-    "rejected": "bg-danger",
-    "withdrawn": "bg-secondary",
-    "archived": "bg-dark",
+    "interested": "bg-secondary-subtle text-dark border border-secondary-subtle",
+    "preparing": "bg-info-subtle text-dark border border-info-subtle",
+    "applied": "bg-primary-subtle text-dark border border-primary-subtle",
+    "waiting_for_reply": "bg-warning-subtle text-dark border border-warning-subtle",
+    "interview_scheduled": "bg-success-subtle text-dark border border-success-subtle",
+    "interview_completed": "bg-success-subtle text-dark border border-success-subtle",
+    "waiting_for_decision": "bg-warning-subtle text-dark border border-warning-subtle",
+    "offer_received": "bg-success-subtle text-dark border border-success-subtle",
+    "rejected": "bg-danger-subtle text-dark border border-danger-subtle",
+    "withdrawn": "bg-secondary-subtle text-dark border border-secondary-subtle",
+    "archived": "bg-dark-subtle text-dark border border-secondary-subtle",
 }
 
 @register.filter

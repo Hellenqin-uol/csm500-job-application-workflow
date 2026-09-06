@@ -37,7 +37,7 @@
           <dd class="col-sm-9">{{ application.job_title }}</dd>
 
           <dt class="col-sm-3">Status</dt>
-          <dd class="col-sm-9"><span class="badge bg-secondary">{{ application.get_status_display }}</span></dd>
+          <dd class="col-sm-9"><span class="badge {{ application.status|status_badge_class }}">{{ application.get_status_display }}</span></dd>
 
           <dt class="col-sm-3">Job URL</dt>
           <dd class="col-sm-9">
@@ -55,16 +55,16 @@
           <dd class="col-sm-9">{{ application.application_deadline|default:'Not provided' }}</dd>
 
           <dt class="col-sm-3">Applied at</dt>
-          <dd class="col-sm-9">{{ application.applied_at|default:'Not provided' }}</dd>          
+          <dd class="col-sm-9">{{ application.applied_at|default:'Not provided' }}</dd>
 
           <dt class="col-sm-3">Interview at</dt>
-          <dd class="col-sm-9">{{ application.interview_at|default:'Not provided' }}</dd>  
+          <dd class="col-sm-9">{{ application.interview_at|default:'Not provided' }}</dd>
 
           <dt class="col-sm-3">Interview completed at</dt>
-          <dd class="col-sm-9">{{ application.interview_completed_at|default:'Not provided' }}</dd>            
+          <dd class="col-sm-9">{{ application.interview_completed_at|default:'Not provided' }}</dd>
 
           <dt class="col-sm-3">Offer deadline</dt>
-          <dd class="col-sm-9">{{ application.offer_deadline|default:'Not provided' }}</dd>        
+          <dd class="col-sm-9">{{ application.offer_deadline|default:'Not provided' }}</dd>
 
           <dt class="col-sm-3">Notes</dt>
           <dd class="col-sm-9">
@@ -102,6 +102,111 @@
       </div>
     </div>
 
+    <div class="card shadow-sm mb-4">
+      <div class="card-header">Reminders</div>
+
+      <div class="card-body">
+        <h2 class="h5 mb-3">Open reminders</h2>
+
+        {% if open_reminders %}
+          <div class="d-flex flex-column gap-3 mb-4">
+            {% for reminder in open_reminders %}
+              <div class="card shadow-sm
+              {% if reminder.is_overdue %}
+              bg-danger-subtle border-danger
+              {% elif reminder.is_due_today %}                
+              bg-warning-subtle border-warning
+              {% else %}    
+              bg-primary-subtle border-primary
+              {% endif %}
+              ">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        {% if reminder.is_overdue %}
+                          <span class="badge bg-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            Overdue
+                          </span>
+                        {% elif reminder.is_due_today %}
+                          <span class="badge bg-warning text-dark">
+                            <i class="bi bi-bell" aria-hidden="true"></i>
+                            Due today
+                          </span>
+                        {% else %}
+                          <span class="badge bg-primary">
+                            <i class="bi bi-bell" aria-hidden="true"></i>
+                            Upcoming
+                          </span>
+                        {% endif %}
+
+                        <span class="small text-muted">{{ reminder.due_at|date:'Y-m-d H:i' }}</span>
+                      </div>
+
+                      <div class="fw-semibold">{{ reminder.title }}</div>
+
+                      <div class="small text-muted mt-1">{{ reminder.get_source_display }}</div>
+                    </div>
+
+                    <div class="flex-shrink-0">
+                      <form method="post" action="{% url 'applications:reminder_complete' reminder.id %}">
+                        {% csrf_token %}
+
+                        <button type="submit" class="btn btn-sm btn-outline-success" title="Mark this reminder as done">
+                          <i class="bi bi-check2" aria-hidden="true"></i>
+                          Mark as done
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-light border mb-4">
+            <i class="bi bi-check-circle text-success" aria-hidden="true"></i>
+            <span class="ms-1">No open reminders.</span>
+          </div>
+        {% endif %}
+
+        <hr />
+
+        <h2 class="h5 mb-3">Reminder history</h2>
+
+        {% if closed_reminders %}
+          <div class="list-group">
+            {% for reminder in closed_reminders %}
+              <div class="list-group-item d-flex justify-content-between align-items-start gap-3">
+                <div>
+                  <div class="fw-semibold">{{ reminder.title }}</div>
+
+                  <div class="small text-muted mt-1">Due: {{ reminder.due_at|date:'Y-m-d H:i' }}</div>
+
+                  {% if reminder.completed_at %}
+                    <div class="small text-muted mt-1">Completed: {{ reminder.completed_at|date:'Y-m-d H:i' }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="text-end flex-shrink-0">
+                  {% if reminder.status == 'done' %}
+                    <span class="badge bg-success">Done</span>
+                  {% elif reminder.status == 'cancelled' %}
+                    <span class="badge bg-secondary">Cancelled</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark border">{{ reminder.get_status_display }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">No completed or cancelled reminders.</p>
+        {% endif %}
+      </div>
+    </div>
+
     <div class="card shadow-sm mt-4">
       <div class="card-header">Application history</div>
 
@@ -120,12 +225,12 @@
             {% if event.old_status or event.new_status %}
               <div class="small mt-1">
                 {% if event.old_status %}
-                  <span class="badge {{ event.old_status|status_badge_class }}">{{ event.old_status | status_label }}</span>
+                  <span class="badge {{ event.old_status|status_badge_class }}">{{ event.old_status|status_label }}</span>
                 {% endif %}
 
                 {% if event.new_status %}
                   <i class="bi bi-arrow-right"></i>
-                  <span class="badge {{ event.new_status|status_badge_class }}">{{ event.new_status | status_label }}</span>
+                  <span class="badge {{ event.new_status|status_badge_class }}">{{ event.new_status|status_label }}</span>
                 {% endif %}
               </div>
             {% endif %}

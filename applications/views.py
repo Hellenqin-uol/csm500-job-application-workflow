@@ -11,9 +11,11 @@ from django.http import JsonResponse
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 import json
-from .models import JobApplication, VISIBLE_BOARD_STATES, ApplicationEvent
+from .models import JobApplication, VISIBLE_BOARD_STATES, ApplicationEvent, Reminder
+from .services.workflow import change_application_status
+from .services.reminders import generate_reminders_for_application
 from django.views.generic import DetailView, UpdateView, DeleteView
-from .services import change_application_status
+from django.utils import timezone
 
 # User Registration view
 class RegisterView(CreateView):
@@ -37,37 +39,128 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
     template_name = "applications/kanban.html"
 
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs)
 
-        query = self.request.GET.get("q", "").strip()
+        search_query = self.request.GET.get("q", "").strip()
 
-        states = list(VISIBLE_BOARD_STATES)
+        applications = self.get_applications_for_board(search_query)
+        open_reminders = self.get_open_reminders()
 
-        applications = JobApplication.objects.filter(user=self.request.user, status__in=states)
+        columns = self.build_kanban_columns(applications=applications, open_reminders=open_reminders)
 
-        if query:
+        context["columns"] = columns
+        context["query"] = search_query
+        context["result_count"] = len(applications)
+        context["has_search"] = bool(search_query)
+        context["open_reminders"] = open_reminders
+        context["overdue_reminders"] = self.get_overdue_reminders(open_reminders)
+        context["archived_count"] = self.get_archived_count()
+
+        return context
+    
+    def get_applications_for_board(self, search_query):
+        applications = JobApplication.objects.filter(
+            user=self.request.user,
+            status__in=VISIBLE_BOARD_STATES,
+        ).order_by("-updated_at")
+
+        if search_query:
             applications = applications.filter(
-                Q(company_name__icontains=query) |
-                Q(job_title__icontains=query)
+                Q(company_name__icontains=search_query)
+                | Q(job_title__icontains=search_query)
             )
-        result_count = applications.count()     
+
+        return list(applications)
+
+    def get_open_reminders(self):
+        reminders = Reminder.objects.filter(
+            application__user=self.request.user,
+            status=Reminder.Status.OPEN,
+        ).select_related("application").order_by("due_at")
+
+        return list(reminders)
+
+    def get_overdue_reminders(self, open_reminders):
+        now = timezone.now()
+        overdue_reminders = []
+
+        for reminder in open_reminders:
+            if reminder.due_at < now:
+                overdue_reminders.append(reminder)
+
+        return overdue_reminders
+
+    def get_archived_count(self):
+        return JobApplication.objects.filter(
+            user=self.request.user,
+            status=JobApplication.Status.ARCHIVED,
+        ).count()
+
+    def build_kanban_columns(self, applications, open_reminders):
+        reminders_by_application_id = {}
+
+        for reminder in open_reminders:
+            application_id = reminder.application_id
+
+            if application_id not in reminders_by_application_id:
+                reminders_by_application_id[application_id] = []
+
+            reminders_by_application_id[application_id].append(reminder)
 
         columns = []
 
-        for status_value in states:
-            status_label = JobApplication.Status(status_value).label
-            columns.append({
-                "status": status_value,
-                "label": status_label,
-                "applications": applications.filter(status=status_value),
-            })
+        for status in VISIBLE_BOARD_STATES:
+            cards = []
 
-        context["columns"] = columns
-        context["query"] = query
-        context["has_search"] = bool(query)
-        context["result_count"] = result_count
+            for application in applications:
+                if application.status != status:
+                    continue
 
-        return context
+                application_reminders = reminders_by_application_id.get(application.id, []                )
+
+                card = self.build_application_card(
+                    application=application,
+                    reminders=application_reminders,
+                )
+
+                cards.append(card)
+
+            column = {
+                "status": status,
+                "label": JobApplication.Status(status).label,
+                "cards": cards,
+            }
+
+            columns.append(column)
+
+        return columns
+
+    def build_application_card(self, application, reminders):
+        today = timezone.localdate()
+        now = timezone.now()
+
+        next_reminder = None
+        has_overdue_reminder = False
+        has_due_today_reminder = False
+
+        if reminders:
+            next_reminder = reminders[0]
+
+        for reminder in reminders:
+            if reminder.due_at < now:
+                has_overdue_reminder = True
+
+            if reminder.due_at.date() == today:
+                has_due_today_reminder = True
+
+        return {
+            "application": application,
+            "reminders": reminders,
+            "next_reminder": next_reminder,
+            "has_overdue_reminder": has_overdue_reminder,
+            "has_due_today_reminder": has_due_today_reminder,
+        }
 
 # create a new job application which is then added to the kanban board
 class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -94,6 +187,8 @@ class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVi
                 f"{self.object.get_status_display()}."
             )
         )
+        # cretae reminders for application deadline
+        generate_reminders_for_application(self.object)
 
         return response
     
@@ -104,6 +199,19 @@ class JobApplicationDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         return JobApplication.objects.filter(user=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["open_reminders"] = self.object.reminders.filter(
+            status=Reminder.Status.OPEN
+        ).order_by("due_at")
+
+        context["closed_reminders"] = self.object.reminders.exclude(
+            status=Reminder.Status.OPEN
+        ).order_by("-created_at")
+
+        return context
     
 class JobApplicationUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = JobApplication
@@ -226,8 +334,6 @@ class JobApplicationStatusUpdateView(LoginRequiredMixin, View):
                     status=400
                 )
 
-            #FIXME later call reminder logic here
-
             messages.success(
                 request,
                 f"Application '{application.job_title}' moved to {application.get_status_display()}."
@@ -276,10 +382,18 @@ class ArchiveJobApplicationView(LoginRequiredMixin, View):
 
         application.status = JobApplication.Status.ARCHIVED
         application.save()
-        #FIMXE stop all reminders later here
 
+        # stop all reminders
+        Reminder.objects.filter(
+            application=application,
+            status=Reminder.Status.OPEN,
+        ).update(
+            status=Reminder.Status.CANCELLED
+        )
+
+        # log entry in history as archived
         ApplicationEvent.objects.create(
-            application=self.object,
+            application=application,
             event_type=ApplicationEvent.EventType.ARCHIVED,
             description=(
                 f"Application entry archived."
@@ -292,3 +406,27 @@ class ArchiveJobApplicationView(LoginRequiredMixin, View):
         )
 
         return redirect("applications:kanban")
+    
+# mark reminder as done
+class ReminderCompleteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        reminder = get_object_or_404(
+            Reminder,
+            pk=pk,
+            application__user=request.user,
+            status=Reminder.Status.OPEN,
+        )
+
+        reminder.status = Reminder.Status.DONE
+        reminder.completed_at = timezone.now()
+        reminder.save()
+
+        ApplicationEvent.objects.create(
+            application=reminder.application,
+            event_type=ApplicationEvent.EventType.REMINDER_COMPLETED,
+            description=f"Reminder completed: {reminder.title}",
+        )
+
+        messages.success(request, "Reminder marked as done.")
+
+        return redirect("applications:application_detail", pk=reminder.application.pk)

@@ -15,7 +15,7 @@
     <div class="text-start mt-4 mb-4">
       <a href="{% url 'applications:application_create' %}" class="btn btn-primary">New Application</a>
       <a href="{% url 'applications:archived_applications' %}" class="btn btn-outline-secondary">
-        View archived applications
+        View archived applications{% if archived_count %} ({{ archived_count }}){% endif %}
       </a>
     </div>
 
@@ -38,7 +38,7 @@
 
       {% if has_search and result_count > 0 %}
         <div class="form-text mt-2">
-          Showing results for "<strong>{{ query }}</strong>".
+          Showing {{ result_count }} result{{ result_count|pluralize }} for "<strong>{{ query }}</strong>".
         </div>
       {% endif %}
     </form>
@@ -47,18 +47,73 @@
         No applications found for "<strong>{{ query }}</strong>".
       </div>
     {% endif %}
-
-    <div class="kanban-board d-flex gap-2 pb-2 overflow-auto">
-      {% for column in columns %}
-        <div class="kanban-column-wrapper">
-          <div class="card shadow-sm h-100">
-            <div class="card-header fw-semibold d-flex justify-content-between align-items-center {{ column.status|status_header_class }}">
-              <span>{{ column.label }}</span>
-              <span class="badge bg-secondary">{{ column.applications|length }}</span>
+    {% if open_reminders %}
+    <div class="card shadow-sm mb-4 reminder-top-list">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Open reminders</strong>
+          <span class="badge bg-secondary ms-2">{{ open_reminders|length }}</span>
+        </div>
+        {% if overdue_reminders %}
+          <span class="badge bg-danger">{{ overdue_reminders|length }} overdue</span>
+        {% endif %}
+      </div>
+      <div class="list-group list-group-flush">
+        {% for reminder in open_reminders %}
+          <div class="list-group-item d-flex justify-content-between align-items-start gap-3 reminder-list-item
+             {% if reminder.is_overdue %}
+              reminder-list-item-overdue
+            {% elif reminder.is_due_today %}
+              reminder-list-item-today
+            {% endif %}" data-application-id="{{ reminder.application.id }}">
+            <div>
+              <div class="fw-semibold">{{ reminder.title }}</div>
+              <div class="small text-muted">{{ reminder.application.job_title }} at {{ reminder.application.company_name }}</div>
+              <div class="small mt-1">
+                Due:
+                {% if reminder.is_overdue %}
+                  <span class="text-danger fw-semibold">
+                    {{ reminder.due_at|date:"Y-m-d H:i" }} overdue
+                  </span>
+                {% elif reminder.is_due_today %}
+                  <span class="text-warning fw-semibold">
+                    {{ reminder.due_at|date:"Y-m-d H:i" }} today
+                  </span>
+                {% else %}
+                  <span class="text-muted">
+                    {{ reminder.due_at|date:"Y-m-d H:i" }}
+                  </span>
+                {% endif %}
+              </div>
             </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+              <a href="{% url 'applications:application_detail' reminder.application.id %}" class="btn btn-sm btn-outline-secondary">Details</a>
+              <form method="post" action="{% url 'applications:reminder_complete' reminder.id %}">
+                {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-success" title="Mark this reminder as done">
+                    <i class="bi bi-check2" aria-hidden="true"></i>
+                    Mark as done
+                  </button>
+              </form> 
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+    </div>
+  {% endif %}
+  <div class="kanban-board d-flex gap-2 pb-2 overflow-auto">
+    {% for column in columns %}
+      <div class="kanban-column-wrapper">
+        <div class="card shadow-sm h-100">
 
-            <div class="card-body bg-light kanban-column" style="min-height: 300px;"
-             data-status="{{ column.status }}" 
+          <div class="card-header fw-semibold d-flex justify-content-between align-items-center {{ column.status|status_header_class }}">
+            <span>{{ column.label }}</span>
+            <span class="badge bg-secondary">{{ column.cards|length }}</span>
+          </div>
+          <div
+            class="card-body bg-light kanban-column"
+            style="min-height: 300px;"
+            data-status="{{ column.status }}"
             {% if column.status == "applied" %}
               data-transition-field="applied_at"
               data-transition-label="Applied at"
@@ -78,43 +133,98 @@
               data-transition-label="Offer deadline"
               data-transition-input-type="date"
             {% endif %}
-             >
-              {% for application in column.applications %}
-                <div class="card mb-3 kanban-card" data-application-id="{{ application.id }}" data-update-url="{% url 'applications:application_update_status' application.id %}">
-                  <div class="card-body p-3">
-                    <h6 class="card-title mb-1">{{ application.job_title }}</h6>
-
-                    <p class="text-muted small mb-2">{{ application.company_name }}</p>
-
+          >
+            {% for card in column.cards %}
+              {% with application=card.application %}
+                <div id="application-card-{{ application.id }}" class="card mb-2 kanban-card {% if card.has_overdue_reminder %}border-danger border-2{% elif card.has_due_today_reminder %}border-warning border-2{% endif %}"
+                  data-application-id="{{ application.id }}"
+                  data-update-url="{% url 'applications:application_update_status' application.id %}">
+                  <div class="card-body p-2">
+                    <h6 class="card-title mb-1">
+                      {{ application.job_title }}
+                    </h6>
+                    <p class="text-muted small mb-2">
+                      {{ application.company_name }}
+                    </p>
                     {% if application.application_deadline %}
+                      {% if application.status == "interested" or application.status == "preparing" %}
+                        <div class="small mb-2">
+                          <strong>Deadline:</strong>
+                          {{ application.application_deadline }}
+                        </div>
+                      {% endif %}
+                    {% endif %}
+
+                    {% if card.next_reminder %}
                       <div class="small mb-2">
-                        <strong>Deadline:</strong>
-                        {{ application.application_deadline }}
+                        {% if card.has_overdue_reminder %}
+                          <span class="badge bg-danger">
+                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                            Reminder overdue
+                          </span>
+                        {% elif card.has_due_today_reminder %}
+                          <span class="badge bg-warning text-dark">
+                            <i class="bi bi-bell" aria-hidden="true"></i>
+                            Reminder today
+                          </span>
+                        {% else %}
+                          <span class="badge bg-light text-dark border">
+                            <i class="bi bi-bell" aria-hidden="true"></i>
+                            {{ card.next_reminder.due_at|date:"Y-m-d" }}
+                          </span>
+                        {% endif %}
                       </div>
                     {% endif %}
 
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                      <span class="badge  {{ application.status|status_badge_class }}">{{ application.get_status_display }}</span>
-                      <button type="button" class="btn btn-sm btn-outline-secondary" title="View application"
-                       data-bs-toggle="modal" data-bs-target="#applicationQuickViewModal" 
-                       data-job-title="{{ application.job_title }}" data-company-name="{{ application.company_name }}" 
-                       data-status="{{ application.get_status_display }}" data-deadline="{{ application.application_deadline|default:'Not provided' }}"
-                       data-contact-email="{{ application.contact_email|default:'Not provided' }}" data-notes="{{ application.notes|default:'No notes'|escape }}" 
-                       data-detail-url="{% url 'applications:application_detail' application.id %}" data-edit-url="{% url 'applications:application_update' application.id %}">
-                       <i class="bi bi-eye" aria-hidden="true"></i>
-                      <span class="visually-hidden">View application details</span>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        title="View application"
+                        data-bs-toggle="modal"
+                        data-bs-target="#applicationQuickViewModal"
+                        data-job-title="{{ application.job_title }}"
+                        data-company-name="{{ application.company_name }}"
+                        data-status="{{ application.get_status_display }}"
+                        data-status-class="{{ application.status|status_badge_class }}"
+                        data-deadline="{{ application.application_deadline|default:'Not provided' }}"
+                        data-contact-email="{{ application.contact_email|default:'Not provided' }}"
+                        data-notes="{{ application.notes|default:'No notes'|escape }}"
+                        data-detail-url="{% url 'applications:application_detail' application.id %}"
+                        data-edit-url="{% url 'applications:application_update' application.id %}"
+                        {% if card.next_reminder %}
+                          data-reminder-title="{{ card.next_reminder.title|escape }}"
+                          data-reminder-due="{{ card.next_reminder.due_at|date:'Y-m-d H:i' }}"
+                          {% if card.has_overdue_reminder %}
+                            data-reminder-state="overdue"
+                          {% elif card.has_due_today_reminder %}
+                            data-reminder-state="today"
+                          {% else %}
+                            data-reminder-state="upcoming"
+                          {% endif %}
+                        {% else %}
+                          data-reminder-title=""
+                          data-reminder-due=""
+                          data-reminder-state=""
+                        {% endif %}                        
+                        >
+                        <i class="bi bi-eye" aria-hidden="true"></i>
+                        <span class="visually-hidden">View application details</span>
                       </button>
                     </div>
+
                   </div>
                 </div>
-              {% empty %}
-                <p class="kanban-empty-state text-muted small">No applications</p>
-              {% endfor %}
-            </div>
+
+              {% endwith %}
+            {% empty %}
+              <p class="kanban-empty-state text-muted small">No applications</p>
+            {% endfor %}
           </div>
         </div>
-      {% endfor %}
-    </div>
+      </div>
+    {% endfor %}
+  </div>
   </div>
 
   <div class="modal fade" id="applicationQuickViewModal" tabindex="-1" aria-labelledby="applicationQuickViewModalLabel" aria-hidden="true">
@@ -134,7 +244,10 @@
             <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9" id="modalStatus"></dd>
 
-            <dt class="col-sm-3">Deadline</dt>
+            <dt class="col-sm-3">Next reminder</dt>
+            <dd class="col-sm-9" id="modalNextReminder"></dd>
+
+            <dt class="col-sm-3">Application Deadline</dt>
             <dd class="col-sm-9" id="modalDeadline"></dd>
 
             <dt class="col-sm-3">Contact email</dt>

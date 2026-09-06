@@ -22,3 +22,36 @@
 .kanban-card .card-body {
   padding: 0.75rem;
 }
+.kanban-card-highlight {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.35);
+  transform: translateY(-2px);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  border-color: #0d6efd !important;
+}
+.kanban-card {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.reminder-top-list {
+  background-color: #f3f8ff;
+}
+
+.reminder-top-list .card-header {
+  background-color: #e7f1ff;
+}
+
+.reminder-top-list .list-group-item {
+  background-color: #ffffff;
+}
+
+.reminder-top-list .list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+.reminder-list-item-overdue {
+  border-left: 0.3rem solid #dc3545;
+}
+
+.reminder-list-item-today {
+  border-left: 0.3rem solid #ffc107;
+}

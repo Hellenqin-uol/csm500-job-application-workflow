@@ -204,6 +204,11 @@ if (quickViewModal) {
     const jobTitle = button.getAttribute('data-job-title')
     const companyName = button.getAttribute('data-company-name')
     const status = button.getAttribute('data-status')
+    const statusClass = button.getAttribute("data-status-class") || "bg-secondary"
+    const reminderTitle = button.getAttribute("data-reminder-title")
+    const reminderDue = button.getAttribute("data-reminder-due")
+    const reminderState = button.getAttribute("data-reminder-state")
+
     const deadline = button.getAttribute('data-deadline')
     const contactEmail = button.getAttribute('data-contact-email')
     const notes = button.getAttribute('data-notes')
@@ -212,7 +217,47 @@ if (quickViewModal) {
 
     document.getElementById('applicationQuickViewModalLabel').textContent = jobTitle
     document.getElementById('modalCompanyName').textContent = companyName
-    document.getElementById('modalStatus').textContent = status
+
+    const statusElement = document.getElementById("modalStatus")
+    statusElement.innerHTML = ""
+
+    const statusBadge = document.createElement("span")
+    statusBadge.className = `badge ${statusClass}`
+    statusBadge.textContent = status
+
+    statusElement.appendChild(statusBadge)
+
+    const reminderElement = document.getElementById("modalNextReminder")
+    reminderElement.innerHTML = ""
+
+
+    if (reminderTitle && reminderDue) {
+        const wrapper = document.createElement("div")
+
+        const titleElement = document.createElement("div")
+        titleElement.textContent = reminderTitle
+
+        const dueElement = document.createElement("div")
+        dueElement.classList.add("small", "mt-1")
+
+        if (reminderState === "overdue") {
+            dueElement.classList.add("text-danger", "fw-semibold")
+            dueElement.textContent = `Due: ${reminderDue} overdue`
+        } else if (reminderState === "today") {
+            dueElement.classList.add("text-warning", "fw-semibold")
+            dueElement.textContent = `Due: ${reminderDue} today`
+        } else {
+            dueElement.classList.add("text-muted");
+            dueElement.textContent = `Due: ${reminderDue}`
+        }
+
+        wrapper.appendChild(titleElement)
+        wrapper.appendChild(dueElement)
+        reminderElement.appendChild(wrapper)
+    } else {
+        reminderElement.innerHTML = '<span class="text-muted">No open reminder</span>'
+    }
+
     document.getElementById('modalDeadline').textContent = deadline
     document.getElementById('modalContactEmail').textContent = contactEmail
     document.getElementById('modalNotes').textContent = notes
@@ -221,3 +266,33 @@ if (quickViewModal) {
     document.getElementById('modalEditLink').setAttribute('href', editUrl)
     })
 }
+
+function setupReminderHoverHighlight() {
+  const reminderItems = document.querySelectorAll(".reminder-list-item");
+
+  reminderItems.forEach(function(reminderItem) {
+    const applicationId = reminderItem.dataset.applicationId;
+    const card = document.getElementById(`application-card-${applicationId}`);
+
+    if (!card) {
+      return;
+    }
+
+    reminderItem.addEventListener("mouseenter", function() {
+      card.classList.add("kanban-card-highlight");
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    });
+
+    reminderItem.addEventListener("mouseleave", function() {
+      card.classList.remove("kanban-card-highlight");
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  setupReminderHoverHighlight();
+});

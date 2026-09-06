@@ -12,4 +12,5 @@ urlpatterns = [
     path("applications/<int:pk>/update-status/", views.JobApplicationStatusUpdateView.as_view(), name="application_update_status"),
     path("applications/<int:pk>/archive/", views.ArchiveJobApplicationView.as_view(), name="application_archive"),
     path("applications/archived/", views.ArchivedApplicationsView.as_view(), name="archived_applications"),
+    path("reminders/<int:pk>/complete/", views.ReminderCompleteView.as_view(), name="reminder_complete"),
 ]
