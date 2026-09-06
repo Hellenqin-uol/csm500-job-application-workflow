@@ -183,3 +183,19 @@ class JobApplicationWorkflowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Backend Developer")
+
+    # Archived applications can be unarchived and land in column interested
+    def test_archived_application_can_be_restored_to_board(self):
+        self.application.status = JobApplication.Status.ARCHIVED
+        self.application.save()
+
+        self.client.login(username="alice", password="testpass123")
+
+        url = reverse("applications:application_unarchive", kwargs={"pk": self.application.pk})
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 302)
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, JobApplication.Status.INTERESTED)

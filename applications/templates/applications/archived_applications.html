@@ -57,12 +57,6 @@
               <tr>
                 <td>
                   <strong>{{ application.job_title }}</strong>
-
-                  {% if application.job_url %}
-                    <div class="small">
-                      <a href="{{ application.job_url }}" target="_blank">Job advert</a>
-                    </div>
-                  {% endif %}
                 </td>
 
                 <td>{{ application.company_name }}</td>
@@ -80,7 +74,13 @@
                 </td>
 
                 <td class="text-end">
-                  <a href="{% url 'applications:application_detail' application.id %}" class="btn btn-sm btn-outline-primary">Details</a>
+                    <div class="d-flex justify-content-end gap-2">
+                      <a href="{% url 'applications:application_detail' application.id %}" class="btn btn-sm btn-outline-primary">Details</a>
+                      <form method="post" action="{% url 'applications:application_unarchive' application.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Restore</button>
+                      </form>
+                    </div>
                 </td>
               </tr>
             {% empty %}

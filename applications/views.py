@@ -408,7 +408,36 @@ class ArchiveJobApplicationView(LoginRequiredMixin, View):
         )
 
         return redirect("applications:kanban")
-    
+
+# Unarchive application
+class UnarchiveJobApplicationView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        application = get_object_or_404(
+            JobApplication,
+            pk=pk,
+            user=request.user,
+            status=JobApplication.Status.ARCHIVED,
+        )
+
+        old_status = application.status
+        application.status = JobApplication.Status.INTERESTED
+        application.save()
+
+        ApplicationEvent.objects.create(
+            application=application,
+            event_type=ApplicationEvent.EventType.STATUS_CHANGED,
+            old_status=old_status,
+            new_status=JobApplication.Status.INTERESTED,
+            description="Application restored from archive."
+        )
+
+        messages.success(
+            request,
+            f"Application '{application.job_title}' was restored to the board. No reminders were generated. Please move the job application along the columns to reactivate reminders."
+        )
+
+        return redirect("applications:kanban")
+
 # mark reminder as done
 class ReminderCompleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
