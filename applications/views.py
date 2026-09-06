@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import BootstrapUserCreationForm, JobApplicationForm
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, TemplateView, ListView
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -11,11 +11,13 @@ from django.http import JsonResponse
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 import json
-from .models import JobApplication, VISIBLE_BOARD_STATES, ApplicationEvent, Reminder
+from .models import JobApplication, VISIBLE_BOARD_STATES, ApplicationEvent, Reminder, CalendarFeed
 from .services.workflow import change_application_status
 from .services.reminders import generate_reminders_for_application
 from django.views.generic import DetailView, UpdateView, DeleteView
+from datetime import timedelta, timezone as datetime_timezone
 from django.utils import timezone
+from django.http import Http404, HttpResponse
 
 # User Registration view
 class RegisterView(CreateView):
@@ -430,3 +432,147 @@ class ReminderCompleteView(LoginRequiredMixin, View):
         messages.success(request, "Reminder marked as done.")
 
         return redirect("applications:application_detail", pk=reminder.application.pk)
+    
+# Views for calender feed
+class CalendarFeedSettingsView(LoginRequiredMixin, TemplateView):
+    template_name = "applications/calendar_feed_settings.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        feed = CalendarFeed.objects.filter(user=self.request.user).first()
+
+        feed_url = None
+
+        if feed and feed.is_enabled:
+            feed_path = reverse(
+                "applications:reminder_calendar_feed",
+                kwargs={"token": feed.token}
+            )
+            feed_url = self.request.build_absolute_uri(feed_path)
+
+        context["feed"] = feed
+        context["feed_url"] = feed_url
+
+        return context
+
+
+class CalendarFeedEnableView(LoginRequiredMixin, View):
+    def post(self, request):
+        feed, created = CalendarFeed.objects.get_or_create(user=request.user)
+
+        feed.enable()
+
+        if created:
+            messages.success(request, "Calendar feed was created.")
+        else:
+            messages.success(request, "Calendar feed was enabled.")
+
+        return redirect("applications:calendar_feed_settings")
+
+
+class CalendarFeedResetView(LoginRequiredMixin, View):
+    def post(self, request):
+        feed, _ = CalendarFeed.objects.get_or_create(user=request.user)
+
+        feed.reset_token()
+        feed.is_enabled = True
+        feed.save(update_fields=["token", "is_enabled", "updated_at"])
+
+        messages.success(
+            request,
+            "Calendar feed URL was reset. The previous URL no longer works."
+        )
+
+        return redirect("applications:calendar_feed_settings")
+
+
+class CalendarFeedDisableView(LoginRequiredMixin, View):
+    def post(self, request):
+        feed = CalendarFeed.objects.filter(user=request.user).first()
+
+        if feed:
+            feed.disable()
+            messages.success(request, "Calendar feed was disabled.")
+
+        return redirect("applications:calendar_feed_settings")
+    
+class ReminderCalendarFeedView(View):
+    def get(self, request, token):
+        try:
+            feed = CalendarFeed.objects.select_related("user").get(token=token, is_enabled=True)
+        except CalendarFeed.DoesNotExist:
+            raise Http404("Calendar feed not found")
+
+        reminders = Reminder.objects.filter(application__user=feed.user, status=Reminder.Status.OPEN).select_related("application").order_by("due_at")
+
+        ics_content = self.build_ics(reminders)
+
+        response = HttpResponse(ics_content, content_type="text/calendar; charset=utf-8")
+        response["Content-Disposition"] = 'inline; filename="jobtracker-reminders.ics"'
+
+        return response
+
+    def build_ics(self, reminders):
+        now = timezone.now()
+
+        lines = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//JobTracker//Reminder Feed//EN",
+            "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH",
+            "X-WR-CALNAME:Job Tracker Reminders",
+            "X-WR-CALDESC:Open reminders from Job Tracker",
+        ]
+
+        for reminder in reminders:
+            lines.extend(self.build_event(reminder, now))
+
+        lines.append("END:VCALENDAR")
+
+        return "\r\n".join(lines) + "\r\n"
+
+    def build_event(self, reminder, now):
+        due_at = reminder.due_at
+
+        if timezone.is_naive(due_at):
+            due_at = timezone.make_aware(due_at)
+
+        start = due_at
+        end = due_at + timedelta(minutes=30)
+
+        uid = f"reminder-{reminder.id}@jobtracker.local"
+
+        summary = self.escape_ics_text(reminder.title)
+
+        description = self.escape_ics_text(
+            f"{reminder.application.job_title} at {reminder.application.company_name}"
+        )
+
+        return [
+            "BEGIN:VEVENT",
+            f"UID:{uid}",
+            f"DTSTAMP:{self.format_ics_datetime(now)}",
+            f"DTSTART:{self.format_ics_datetime(start)}",
+            f"DTEND:{self.format_ics_datetime(end)}",
+            f"SUMMARY:{summary}",
+            f"DESCRIPTION:{description}",
+            "END:VEVENT",
+        ]
+
+    def format_ics_datetime(self, value):
+        value = value.astimezone(datetime_timezone.utc)
+        return value.strftime("%Y%m%dT%H%M%SZ")
+
+    def escape_ics_text(self, value):
+        if value is None:
+            return ""
+
+        return (
+            str(value)
+            .replace("\\", "\\\\")
+            .replace(";", "\\;")
+            .replace(",", "\\,")
+            .replace("\n", "\\n")
+        )

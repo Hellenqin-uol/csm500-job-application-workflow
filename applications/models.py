@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+import secrets
 
 # -------------------------------------------------------------------
 # JobApplication holds the applications per User
@@ -27,6 +28,7 @@ class JobApplication(models.Model):
 
     company_name = models.CharField(max_length=255, verbose_name="Company")
     job_title = models.CharField(max_length=255, verbose_name="Job title")
+    job_description = models.TextField(blank=True, verbose_name="Job description")    
     job_url = models.URLField(blank=True, verbose_name="Job URL")
     contact_email = models.EmailField(blank=True, verbose_name="Contact email")
 
@@ -233,3 +235,47 @@ NO_REMINDER_STATES = (
     JobApplication.Status.WITHDRAWN,
     JobApplication.Status.ARCHIVED,
 )
+
+# -------------------------------------------------------------------
+# Model for Calender Feed enable and disable
+# stores the Calender feed token
+# ------------------------------------------------------------------- 
+def default_calendar_feed_token():
+    return secrets.token_urlsafe(32)
+
+
+class CalendarFeed(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="calendar_feed"
+    )
+
+    token = models.CharField(
+        max_length=128,
+        unique=True,
+        default=default_calendar_feed_token
+    )
+
+    is_enabled = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def reset_token(self):
+        self.token = default_calendar_feed_token()
+        self.save(update_fields=["token", "updated_at"])
+
+    def disable(self):
+        self.is_enabled = False
+        self.save(update_fields=["is_enabled", "updated_at"])
+
+    def enable(self):
+        if not self.token:
+            self.token = default_calendar_feed_token()
+
+        self.is_enabled = True
+        self.save(update_fields=["token", "is_enabled", "updated_at"])
+
+    def __str__(self):
+        return f"Calendar feed for {self.user}"

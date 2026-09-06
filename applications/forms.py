@@ -54,6 +54,7 @@ class JobApplicationForm(forms.ModelForm):
             "job_url",
             "contact_email",
             "application_deadline",
+            "job_description",
             "notes",
         ]
 
@@ -77,6 +78,11 @@ class JobApplicationForm(forms.ModelForm):
             "application_deadline": forms.DateInput(attrs={
                 "class": "form-control",
                 "type": "date",
+            }),      
+            "job_description": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 8,
+                "placeholder": "Optional: paste the job description here for later reference.",
             }),
             "notes": forms.Textarea(attrs={
                 "class": "form-control",

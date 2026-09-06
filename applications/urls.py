@@ -13,4 +13,9 @@ urlpatterns = [
     path("applications/<int:pk>/archive/", views.ArchiveJobApplicationView.as_view(), name="application_archive"),
     path("applications/archived/", views.ArchivedApplicationsView.as_view(), name="archived_applications"),
     path("reminders/<int:pk>/complete/", views.ReminderCompleteView.as_view(), name="reminder_complete"),
+    path("calendar/<str:token>/reminders.ics", views.ReminderCalendarFeedView.as_view(), name="reminder_calendar_feed"),
+    path("settings/calendar-feed/", views.CalendarFeedSettingsView.as_view(), name="calendar_feed_settings"),
+    path("settings/calendar-feed/enable/", views.CalendarFeedEnableView.as_view(), name="calendar_feed_enable"),
+    path("settings/calendar-feed/reset/", views.CalendarFeedResetView.as_view(), name="calendar_feed_reset"),
+    path("settings/calendar-feed/disable/", views.CalendarFeedDisableView.as_view(), name="calendar_feed_disable"),    
 ]

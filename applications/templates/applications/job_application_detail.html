@@ -102,6 +102,37 @@
       </div>
     </div>
 
+    <div class="accordion mb-4" id="jobDescriptionAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="jobDescriptionHeading">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#jobDescriptionCollapse"
+            aria-expanded="false"
+            aria-controls="jobDescriptionCollapse">Job description </button>
+        </h2>
+
+        <div
+          id="jobDescriptionCollapse"
+          class="accordion-collapse collapse"
+          aria-labelledby="jobDescriptionHeading"
+          data-bs-parent="#jobDescriptionAccordion">
+
+          <div class="accordion-body">
+            {% if application.job_description %}
+              {{ application.job_description|linebreaks }}
+            {% else %}
+              <p class="text-muted mb-0">
+                No job description stored.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>   
+
     <div class="card shadow-sm mb-4">
       <div class="card-header">Reminders</div>
 

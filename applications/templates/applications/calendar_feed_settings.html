@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Calendar Feed - Job Tracker
+{% endblock %}
+
+{% block content %}
+  <div class="container" style="max-width: 800px;">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+      <div>
+        <h1 class="h2 mb-1">Calendar Feed</h1>
+        <p class="text-muted mb-0">Subscribe to your open reminders in an external calendar application.</p>
+      </div>
+
+      <a href="{% url 'applications:kanban' %}" class="btn btn-outline-secondary">Back to board</a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h5">Read-only reminder feed</h2>
+
+        <p class="text-muted">The calendar feed provides a read-only iCalendar subscription for your open reminders. Calendar applications can use this URL to display your reminders.</p>
+
+        {% if feed and feed.is_enabled %}
+          <label class="form-label">Feed URL</label>
+
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" value="{{ feed_url }}" readonly />
+
+            <a href="{{ feed_url }}" class="btn btn-outline-primary">Open</a>
+          </div>
+
+          <div class="alert alert-warning">
+            <strong>Important:</strong>
+            Anyone with this URL can read your reminder feed. Do not share it publicly. Keep it private. You can reset the URL at any time.
+          </div>
+        {% else %}
+          <div class="alert alert-info">Calendar feed is currently disabled.</div>
+
+          <form method="post" action="{% url 'applications:calendar_feed_enable' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Create calendar feed</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="accordion mb-4" id="calendarHelpAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="calendarHelpHeading"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#calendarHelpCollapse" aria-expanded="false" aria-controls="calendarHelpCollapse">How to add this feed to a calendar app</button></h2>
+
+        <div id="calendarHelpCollapse" class="accordion-collapse collapse" aria-labelledby="calendarHelpHeading" data-bs-parent="#calendarHelpAccordion">
+          <div class="accordion-body">
+            <p class="text-muted">Copy the feed URL and add it as a subscription calendar in your calendar application. The feed is read-only. Changes made in your external calendar will not be written back to Job Tracker.</p>
+
+            <h3 class="h6">Outlook Calendar</h3>
+            <ol class="small">
+              <li>Open Outlook Calendar.</li>
+              <li>Select "Add calendar".</li>
+              <li>Choose "Subscribe from web".</li>
+              <li>Paste the feed URL and save.</li>
+            </ol>
+
+            <h3 class="h6">Apple Calendar</h3>
+            <ol class="small">
+              <li>Open Apple Calendar.</li>
+              <li>Select "File" -> "New Calendar Subscription".</li>
+              <li>Paste the feed URL.</li>
+              <li>Confirm the subscription settings.</li>
+            </ol>
+            <h3 class="h6">Google Calendar</h3>
+            <ol class="small">
+              <li>Open Google Calendar in a browser.</li>
+              <li>Next to "Other calendars", select "From URL".</li>
+              <li>Paste the feed URL.</li>
+              <li>Add the calendar.</li>
+            </ol>
+
+            <p class="small text-muted">
+            Note: Calendar applications may not update subscribed feeds immediately. Refresh intervals depend on the calendar provider and can sometimes be configured on the subscribed calendar.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if feed and feed.is_enabled %}
+      <div class="card shadow-sm border-warning mb-4">
+        <div class="card-body">
+          <h2 class="h5">Manage feed URL</h2>
+
+          <p class="text-muted">Resetting the feed URL revokes the previous URL. Calendar applications using the old URL will no longer receive updates.</p>
+
+          <div class="d-flex gap-2">
+            <form method="post" action="{% url 'applications:calendar_feed_reset' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-warning">Reset feed URL</button>
+            </form>
+
+            <form method="post" action="{% url 'applications:calendar_feed_disable' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger">Disable feed</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
