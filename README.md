@@ -91,6 +91,18 @@ Open the application in your browser:
 
 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
+As first step you will need to register an account.
+
+### Seeding Demo Data
+
+There is a set of demo data for this application. It is mandatory that you will create a user (step 7) firstly.
+Then
+
+`python manage.py seed_demo_data`
+
+The command line prompt will list the available users, ask for which one to insert demo data and if data should be 
+cleared.
+
 
 ## Running Tests
 
