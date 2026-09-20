@@ -21,7 +21,7 @@ The application is implemented with Django and uses a server-rendered UI with Bo
 
 ## Requirements
 
-- Python 3.10+ 
+- Python 3.12+ 
 - pip
 - SQLite, included with Python
 - A modern web browser
@@ -68,7 +68,7 @@ The application uses predefined reminder rules for generating reminders based on
 Run:
 
 ```bash
-python manage.py seed_reminder_rules
+python manage.py create_default_reminder_rules
 ```
 
 This creates or updates the default rule set, for example:
@@ -241,4 +241,16 @@ Run tests:
 
 ```bash
 python manage.py test
+```
+
+List all registered usernames
+
+```bash
+python manage.py shell -c "from django.contrib.auth import get_user_model; print(list(get_user_model().objects.values_list('username', flat=True)))"
+```
+
+Change password of a registered user
+
+```bash
+python manage.py changepassword <username>
 ```

@@ -440,6 +440,10 @@ class UnarchiveJobApplicationView(LoginRequiredMixin, View):
 
 # mark reminder as done
 class ReminderCompleteView(LoginRequiredMixin, View):
+    # reminders can be marked as complete from detail view and kanban board, redirect to the calling view
+    # this is why there are two URLs defined that goes to this same view
+    redirect_to = "reminder_list"
+
     def post(self, request, pk):
         reminder = get_object_or_404(
             Reminder,
@@ -460,7 +464,12 @@ class ReminderCompleteView(LoginRequiredMixin, View):
 
         messages.success(request, "Reminder marked as done.")
 
-        return redirect("applications:application_detail", pk=reminder.application.pk)
+
+        if self.redirect_to == "application_detail":
+            return redirect("applications:application_detail", pk=reminder.application.pk)
+
+        return redirect("applications:kanban")
+
     
 # Views for calender feed
 class CalendarFeedSettingsView(LoginRequiredMixin, TemplateView):
