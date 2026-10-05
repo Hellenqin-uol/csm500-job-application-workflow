@@ -205,6 +205,25 @@ Kanban state change
 
 The main technical focus is the state-based workflow and rule-based reminder system. The frontend uses lightweight JavaScript only for targeted interactions such as drag-and-drop transitions and quick-view modals.
 
+## Time Zone Configuration
+
+The application uses Django's timezone-aware datetime handling:
+
+```python
+USE_TZ = True
+TIME_ZONE = "Europe/London"
+```
+
+Datetime values are stored timezone-aware by Django and displayed using the configured application timezone. The prototype currently uses a single application-wide timezone rather than per-user timezone preferences.
+The iCalendar feed exports reminder events in UTC, as expected by calendar clients. Calendar applications such as Apple Calendar, Google Calendar or Outlook will normally convert these UTC timestamps to the user's local calendar timezone automatically.
+For deployments in a different region, update TIME_ZONE in settings.py, for example:
+
+```python
+TIME_ZONE = "Europe/Berlin"
+```
+
+A future production version could allow users to configure their own timezone individually, but this is not implemented in this prototype.
+
 ## Useful Commands
 
 run development server:

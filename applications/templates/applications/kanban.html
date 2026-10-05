@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load application_tags %}
+{% load tz %}
 
 {% block title %}
   Application Board
@@ -73,15 +74,15 @@
                 Due:
                 {% if reminder.is_overdue %}
                   <span class="text-danger fw-semibold">
-                    {{ reminder.due_at|date:"Y-m-d H:i" }} overdue
+                    {{ reminder.due_at|localtime|date:"Y-m-d H:i" }} overdue
                   </span>
                 {% elif reminder.is_due_today %}
                   <span class="text-warning fw-semibold">
-                    {{ reminder.due_at|date:"Y-m-d H:i" }} today
+                    {{ reminder.due_at|localtime|date:"Y-m-d H:i" }} today
                   </span>
                 {% else %}
                   <span class="text-muted">
-                    {{ reminder.due_at|date:"Y-m-d H:i" }}
+                    {{ reminder.due_at|localtime|date:"Y-m-d H:i" }}
                   </span>
                 {% endif %}
               </div>
