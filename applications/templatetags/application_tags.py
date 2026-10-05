@@ -2,7 +2,7 @@ from django import template
 from applications.models import JobApplication
 register = template.Library()
 
-
+# mapping of job states to bootstrap classes for the header of the columns
 STATUS_HEADER_CLASSES = {
     "interested": "bg-secondary-subtle text-dark",
     "preparing": "bg-info-subtle text-dark",
@@ -16,6 +16,7 @@ STATUS_HEADER_CLASSES = {
     "withdrawn": "bg-secondary-subtle text-dark",
 }
 
+# mapping of job states to bootstrap badge classes
 STATUS_BADGE_CLASSES = {
     "interested": "bg-secondary-subtle text-dark border border-secondary-subtle",
     "preparing": "bg-info-subtle text-dark border border-info-subtle",
@@ -32,12 +33,21 @@ STATUS_BADGE_CLASSES = {
 
 @register.filter
 def status_header_class(status):
+    """
+    filter for rendering the status header to the classes as defined above
+    """
     return STATUS_HEADER_CLASSES.get(status, "bg-light text-dark")
 
 @register.filter
 def status_badge_class(status):
+    """
+    filter for rendering the status badge as defined above
+    """
     return STATUS_BADGE_CLASSES.get(status, "bg-secondary")
 
 @register.filter
 def status_label(value):
+    """
+    render the status as text
+    """
     return dict(JobApplication.Status.choices).get(value, value)

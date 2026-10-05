@@ -26,7 +26,9 @@ The application is implemented with Django and uses a server-rendered UI with Bo
 - SQLite, included with Python
 - A modern web browser
 
-## Setup
+## Method 1: Setup with Python venv
+
+This will setup a Python virtual environment. The project also provides a Docker setup. If you are interested refer to "Method 2: Setup with Docker".
 
 ### 1. Clone or open the project directory
 
@@ -85,7 +87,23 @@ This creates or updates the default rule set, for example:
 python manage.py runserver
 ```
 
-### 7. Access application
+## Method 2: Setup with Docker
+
+A simple Docker Compose setup is provided for development and demonstration. Navigate with the terminal to the root of this application where the Dockerfile resides (e.g. `cd $HOME/git/csm500-job-application-workflow`)
+
+Start the application:
+
+```bash
+docker compose up --build
+```
+
+You can exit the container with CTRL+C. If you do not want to rebuild the container the next run, you can execute
+
+```bash
+docker compose up
+```
+
+## Access application
 
 Open the application in your browser:
 
@@ -93,12 +111,16 @@ Open the application in your browser:
 
 As first step you will need to register an account.
 
-### Seeding Demo Data
+## Seeding Demo Data
 
 There is a set of demo data for this application. It is mandatory that you will create a user (step 7) firstly.
-Then
+Then for the Python venv installation run
 
 `python manage.py seed_demo_data`
+
+and for Docker setup run
+
+`docker compose exec web python manage.py seed_demo_data`
 
 The command line prompt will list the available users, ask for which one to insert demo data and if data should be 
 cleared.
@@ -108,7 +130,14 @@ cleared.
 
 Run the automated test suite with:
 
-python manage.py test
+For Python venv installation
+
+`python manage.py test`
+
+For Docker setup run
+
+`docker compose exec web python manage.py test`
+
 
 The tests cover core functionality such as:
 
@@ -173,14 +202,17 @@ Reminders are generated from predefined rules when applications enter certain wo
 A reminder can be marked as done from the board or the application detail page.
 
 ### 5. Archive applications
+
 Archived applications are removed from the active Kanban board and shown on a separate archived applications page.
 
 ### 6. Calendar feed
+
 The application can provide a read-only iCalendar feed for open reminders. The feed can be managed through: User menu -> Calendar feed
 
 The feed URL can be reset or disabled. The feed is read-only and does not provide two-way calendar synchronisation.
 
 ## Notes on Privacy
+
 The prototype is designed to avoid unnecessary external processing:
 
 * no external AI services
@@ -193,6 +225,7 @@ The prototype is designed to avoid unnecessary external processing:
 
 
 ## Development Notes
+
 The core workflow is based on the following pipeline:
 
 Kanban state change
@@ -225,6 +258,8 @@ TIME_ZONE = "Europe/Berlin"
 A future production version could allow users to configure their own timezone individually, but this is not implemented in this prototype.
 
 ## Useful Commands
+
+*Note*: If you run the Docker variant, add `docker compose exec web` in front of the following commands, e.g. `docker compose exec web python manage.py makemigrations`.
 
 run development server:
 

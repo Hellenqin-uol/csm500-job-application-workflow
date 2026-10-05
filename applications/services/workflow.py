@@ -5,8 +5,10 @@ from django.utils.dateparse import parse_date, parse_datetime
 from django.core.exceptions import ValidationError
 from applications.services.reminders import cancel_open_rule_based_reminders, generate_reminders_for_application
 
-# helpfer function for parse dates
 def parse_required_date(value, field_label):
+    """
+    helpfer function for parse dates
+    """
     parsed = parse_date(value)
 
     if parsed is None:
@@ -14,8 +16,10 @@ def parse_required_date(value, field_label):
 
     return parsed
 
-# helper function for parsing datetimes
 def parse_required_datetime(value, field_label):
+    """
+    helper function for parsing datetimes
+    """
     parsed = parse_datetime(value)
 
     if parsed is None:
@@ -26,9 +30,12 @@ def parse_required_datetime(value, field_label):
 
     return parsed
 
-# this is the event logging and status change function of job applications
 @transaction.atomic
 def change_application_status(application : JobApplication, new_status : str, transition_data: dict | None = None) -> JobApplication:
+    """
+    this is the event logging and status change function of job applications,
+    so moving an application from one state to the other
+    """
     old_status = application.status
 
     if old_status == new_status:
@@ -89,6 +96,7 @@ def change_application_status(application : JobApplication, new_status : str, tr
 
     application.save()
 
+    # create application history log entry
     ApplicationEvent.objects.create(
         application=application,
         event_type=ApplicationEvent.EventType.STATUS_CHANGED,
@@ -101,6 +109,7 @@ def change_application_status(application : JobApplication, new_status : str, tr
         )
     )
 
+    # check and generate reminders for the new state, if necessary
     generate_reminders_for_application(application)
 
     return application

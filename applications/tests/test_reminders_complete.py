@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 
-from applications.models import ApplicationEvent, JobApplication, Reminder, 
+from applications.models import ApplicationEvent, JobApplication, Reminder
 
 class ReminderCompletionTests(TestCase):
     def setUp(self):

@@ -19,8 +19,10 @@ from datetime import timedelta, timezone as datetime_timezone
 from django.utils import timezone
 from django.http import Http404, HttpResponse
 
-# User Registration view
 class RegisterView(CreateView):
+    """
+    User Registration view
+    """
     form_class = BootstrapUserCreationForm
     template_name = "registration/register.html"
     success_url = reverse_lazy("applications:kanban")
@@ -36,8 +38,11 @@ class RegisterView(CreateView):
         login(self.request, self.object)
 
         return response
-    
+
 class KanbanBoardView(LoginRequiredMixin, TemplateView):
+    """
+    main view the Kanban Board    
+    """
     template_name = "applications/kanban.html"
 
     def get_context_data(self, **kwargs):
@@ -164,8 +169,10 @@ class KanbanBoardView(LoginRequiredMixin, TemplateView):
             "has_due_today_reminder": has_due_today_reminder,
         }
 
-# create a new job application which is then added to the kanban board
 class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    """
+    create a new job application which is then added to the kanban board
+    """
     model = JobApplication
     form_class = JobApplicationForm
     template_name = "applications/job_application_form.html"
@@ -193,8 +200,11 @@ class JobApplicationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVi
         generate_reminders_for_application(self.object)
 
         return response
-    
+
 class JobApplicationDetailView(LoginRequiredMixin, DetailView):
+    """
+    Detail view of a job application    
+    """
     model = JobApplication
     template_name = "applications/job_application_detail.html"
     context_object_name = "application"
@@ -214,8 +224,11 @@ class JobApplicationDetailView(LoginRequiredMixin, DetailView):
         ).order_by("-created_at")
 
         return context
-    
+
 class JobApplicationUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    """
+    Update job application entry   
+    """
     model = JobApplication
     form_class = JobApplicationForm
     template_name = "applications/job_application_form.html"
@@ -246,8 +259,10 @@ class JobApplicationUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateVi
             )        
         return response
 
-
 class JobApplicationDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    Handles deletion of job applications
+    """
     model = JobApplication
     template_name = "applications/job_application_confirm_delete.html"
     context_object_name = "application"
@@ -265,8 +280,10 @@ class JobApplicationDeleteView(LoginRequiredMixin, DeleteView):
 
         return response
     
- # this AJAX method handles the drag and drop actions on the kanban board
 class JobApplicationStatusUpdateView(LoginRequiredMixin, View):
+    """
+    AJAX method handling the drag and drop actions on the kanban board
+    """
 
     def handle_no_permission(self):
         # return 401 on ajax requests
@@ -345,9 +362,11 @@ class JobApplicationStatusUpdateView(LoginRequiredMixin, View):
             "success": True,
             "new_status": new_status,
         })
-
-# list of archived applications    
+ 
 class ArchivedApplicationsView(LoginRequiredMixin, ListView):
+    """
+    View list of archived applications 
+    """
     model = JobApplication
     template_name = "applications/archived_applications.html"
     context_object_name = "applications"
@@ -373,8 +392,10 @@ class ArchivedApplicationsView(LoginRequiredMixin, ListView):
         context["query"] = self.request.GET.get("q", "").strip()
         return context
 
-# move application to archive    
 class ArchiveJobApplicationView(LoginRequiredMixin, View):
+    """
+    Action when clicking move application to archive
+    """
     def post(self, request, pk):
         application = get_object_or_404(
             JobApplication,
@@ -409,8 +430,10 @@ class ArchiveJobApplicationView(LoginRequiredMixin, View):
 
         return redirect("applications:kanban")
 
-# Unarchive application
 class UnarchiveJobApplicationView(LoginRequiredMixin, View):
+    """
+    Unarchive application
+    """
     def post(self, request, pk):
         application = get_object_or_404(
             JobApplication,
@@ -438,8 +461,11 @@ class UnarchiveJobApplicationView(LoginRequiredMixin, View):
 
         return redirect("applications:kanban")
 
-# mark reminder as done
 class ReminderCompleteView(LoginRequiredMixin, View):
+    """
+    mark reminder as done action
+    """
+
     # reminders can be marked as complete from detail view and kanban board, redirect to the calling view
     # this is why there are two URLs defined that goes to this same view
     redirect_to = "reminder_list"
@@ -470,9 +496,11 @@ class ReminderCompleteView(LoginRequiredMixin, View):
 
         return redirect("applications:kanban")
 
-    
-# Views for calender feed
 class CalendarFeedSettingsView(LoginRequiredMixin, TemplateView):
+    """
+    Calender feed activation and URL
+    """
+
     template_name = "applications/calendar_feed_settings.html"
 
     def get_context_data(self, **kwargs):
@@ -494,8 +522,11 @@ class CalendarFeedSettingsView(LoginRequiredMixin, TemplateView):
 
         return context
 
-
 class CalendarFeedEnableView(LoginRequiredMixin, View):
+    """
+    Enables the clendar feed
+    """
+
     def post(self, request):
         feed, created = CalendarFeed.objects.get_or_create(user=request.user)
 
@@ -508,8 +539,11 @@ class CalendarFeedEnableView(LoginRequiredMixin, View):
 
         return redirect("applications:calendar_feed_settings")
 
-
 class CalendarFeedResetView(LoginRequiredMixin, View):
+    """
+    Reset the token of a calendar feed
+    """
+
     def post(self, request):
         feed, _ = CalendarFeed.objects.get_or_create(user=request.user)
 
@@ -524,8 +558,10 @@ class CalendarFeedResetView(LoginRequiredMixin, View):
 
         return redirect("applications:calendar_feed_settings")
 
-
 class CalendarFeedDisableView(LoginRequiredMixin, View):
+    """
+    Disables calendar feed
+    """
     def post(self, request):
         feed = CalendarFeed.objects.filter(user=request.user).first()
 
@@ -534,8 +570,12 @@ class CalendarFeedDisableView(LoginRequiredMixin, View):
             messages.success(request, "Calendar feed was disabled.")
 
         return redirect("applications:calendar_feed_settings")
-    
+
 class ReminderCalendarFeedView(View):
+    """
+    Generates open reminders rendered as iCal format per user 
+    """
+
     def get(self, request, token):
         try:
             feed = CalendarFeed.objects.select_related("user").get(token=token, is_enabled=True)

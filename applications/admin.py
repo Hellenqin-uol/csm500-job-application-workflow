@@ -1,3 +1,3 @@
 from django.contrib import admin
 
-# Register your models here.
+# the job tracker does not use Django Admin generator

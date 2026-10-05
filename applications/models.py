@@ -3,10 +3,10 @@ from django.conf import settings
 from django.utils import timezone
 import secrets
 
-# -------------------------------------------------------------------
-# JobApplication holds the applications per User
-# -------------------------------------------------------------------
 class JobApplication(models.Model):
+    """
+    JobApplication holds the applications per User
+    """
     class Status(models.TextChoices):
         INTERESTED = "interested", "Interested"
         PREPARING = "preparing", "Preparing"
@@ -54,12 +54,13 @@ class JobApplication(models.Model):
     def __str__(self):
         return f"{self.job_title} at {self.company_name}"
 
-# -------------------------------------------------------------------
-# This is the Event log of the job application
-# whenever it is moved along the kanban board or
-# reminder are generaed, en entry will appear here
-# -------------------------------------------------------------------
+
 class ApplicationEvent(models.Model):
+    """
+    This is the Event log of the job application
+    whenever it is moved along the kanban board or
+    reminder are generaed, en entry will appear here.
+    """
     class EventType(models.TextChoices):
         CREATED = "created", "Created"
         STATUS_CHANGED = "status_changed", "Status changed"
@@ -93,10 +94,10 @@ class ApplicationEvent(models.Model):
     def __str__(self):
         return f"{self.get_event_type_display()} for {self.application}"
 
-# -------------------------------------------------------------------
-# Generic Reminder Rules for this Applications
-# -------------------------------------------------------------------
 class ReminderRule(models.Model):
+    """
+    Generic Reminder Rules for the Pricacy Aware Job Tracker
+    """
     class AnchorType(models.TextChoices):
         APPLICATION_DEADLINE = "application_deadline", "Application deadline"
         APPLIED_AT = "applied_at", "Applied at"
@@ -145,11 +146,14 @@ class ReminderRule(models.Model):
         return self.name
 
 # -------------------------------------------------------------------
-# Generated reminders for applications are stored here.
-# They reference to the reminder rules.
-# It stores also the status, e.g. open
+
 # -------------------------------------------------------------------
 class Reminder(models.Model):
+    """
+    Generated reminders for applications are stored here.
+    They reference to the reminder rules.
+    It stores also the status, e.g. open    
+    """
     class Status(models.TextChoices):
         OPEN = "open", "Open"
         DONE = "done", "Done"
@@ -241,10 +245,16 @@ NO_REMINDER_STATES = (
 # stores the Calender feed token
 # ------------------------------------------------------------------- 
 def default_calendar_feed_token():
+    """
+    Generates new token for the Calendar feed
+    """
     return secrets.token_urlsafe(32)
 
 
 class CalendarFeed(models.Model):
+    """
+    Model for the calendar feed, stores token, if enabled, provides methods for enabling, disabling and resetting of token
+    """
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

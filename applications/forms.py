@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from applications.models import JobApplication
 
 class BootstrapAuthenticationForm(AuthenticationForm):
+    """
+    Overwrite default Django login form to set the Bootstrap classes on the widgets
+    """
     username = forms.CharField(
         widget=forms.TextInput(attrs={
             "class": "form-control",
@@ -18,8 +21,10 @@ class BootstrapAuthenticationForm(AuthenticationForm):
         })
     )
 
-
 class BootstrapUserCreationForm(UserCreationForm):
+    """
+    Overwrite default Django registration form to set the Bootstrap classes on the widgets
+    """
     username = forms.CharField(
         widget=forms.TextInput(attrs={
             "class": "form-control",
@@ -46,6 +51,9 @@ class BootstrapUserCreationForm(UserCreationForm):
         fields = ("username", "password1", "password2")
 
 class JobApplicationForm(forms.ModelForm):
+    """
+    The form for entering new job applications
+    """
     class Meta:
         model = JobApplication
         fields = [
