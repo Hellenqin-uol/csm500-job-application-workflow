@@ -1,6 +1,9 @@
 from django.core.management.base import BaseCommand
 
 from applications.models import JobApplication, ReminderRule
+"""
+Management command for creating the default reminder rule set.
+"""
 
 DEFAULT_REMINDER_RULES = [
     {

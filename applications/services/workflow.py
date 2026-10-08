@@ -5,6 +5,13 @@ from django.utils.dateparse import parse_date, parse_datetime
 from django.core.exceptions import ValidationError
 from applications.services.reminders import cancel_open_rule_based_reminders, generate_reminders_for_application
 
+"""
+Workflow transition logic for job applications.
+
+Handles application state changes, records workflow events, and triggers
+reminder generation after transitions.
+"""
+
 def parse_required_date(value, field_label):
     """
     helpfer function for parse dates

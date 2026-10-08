@@ -3,6 +3,10 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from applications.models import JobApplication
 
+"""
+Django forms for creating and updating job applications and user accounts.
+"""
+
 class BootstrapAuthenticationForm(AuthenticationForm):
     """
     Overwrite default Django login form to set the Bootstrap classes on the widgets

@@ -5,7 +5,11 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from applications.models import ApplicationEvent, JobApplication, Reminder, ReminderRule
 from applications.services.reminders import generate_reminders_for_application
+"""
+Management command for creating synthetic demo data.
 
+Intended for screenshots, screencasts, and manual testing only.
+"""
 
 DEMO_COMPANIES = [
     "DemoTech GmbH",

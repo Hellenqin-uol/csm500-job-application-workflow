@@ -3,9 +3,15 @@ from django.conf import settings
 from django.utils import timezone
 import secrets
 
+"""
+Database models for the job application tracker.
+
+Defines job applications, workflow events, reminder rules, generated reminders,
+and calendar feed settings.
+"""
 class JobApplication(models.Model):
     """
-    JobApplication holds the applications per User
+    JobApplication model that holds the job applications per User
     """
     class Status(models.TextChoices):
         INTERESTED = "interested", "Interested"
@@ -145,9 +151,6 @@ class ReminderRule(models.Model):
     def __str__(self):
         return self.name
 
-# -------------------------------------------------------------------
-
-# -------------------------------------------------------------------
 class Reminder(models.Model):
     """
     Generated reminders for applications are stored here.

@@ -19,9 +19,16 @@ from datetime import timedelta, timezone as datetime_timezone
 from django.utils import timezone
 from django.http import Http404, HttpResponse
 
+"""
+Django views for the job application tracker.
+
+Includes views for application management, Kanban board interaction,
+reminders, archiving, and calendar feed settings.
+"""
 class RegisterView(CreateView):
     """
-    User Registration view
+    User Registration view, it overwrites the default registration view
+    to be compatible with the bootstrap templates
     """
     form_class = BootstrapUserCreationForm
     template_name = "registration/register.html"
@@ -498,7 +505,7 @@ class ReminderCompleteView(LoginRequiredMixin, View):
 
 class CalendarFeedSettingsView(LoginRequiredMixin, TemplateView):
     """
-    Calender feed activation and URL
+    Calender feed activation and feed URL
     """
 
     template_name = "applications/calendar_feed_settings.html"
@@ -573,7 +580,10 @@ class CalendarFeedDisableView(LoginRequiredMixin, View):
 
 class ReminderCalendarFeedView(View):
     """
-    Generates open reminders rendered as iCal format per user 
+    iCalendar feed generation for open reminders.
+
+    Builds a read-only calendar feed from open reminder records without exposing
+    sensitive free-text fields such as notes or job descriptions.
     """
 
     def get(self, request, token):

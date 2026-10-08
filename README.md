@@ -1,6 +1,8 @@
 # A Privacy-Aware State-Based Workflow System for Job Application Management with Rule-Based Reminders
 
-A privacy-aware job application tracking prototype with a Kanban-based workflow, state-based reminders, event history, and a read-only iCalendar reminder feed.
+A research prototype for privacy-aware job application tracking using a state-based workflow model, a Kanban board, event history, rule-based reminders, and a read-only iCalendar feed.
+
+This project was developed as an academic thesis prototype. It focuses on transparent workflow automation and reminder generation without relying on external AI services, email scanning, or job portal scraping.
 
 The application is implemented with Django and uses a server-rendered UI with Bootstrap and SortableJS for lightweight drag-and-drop interaction.
 
@@ -18,6 +20,24 @@ The application is implemented with Django and uses a server-rendered UI with Bo
 - Archived applications view
 - Search on the Kanban board
 - Optional read-only iCalendar feed for open reminders
+
+## Screenshots
+
+### Kanban board
+
+[<img src="docs/screenshots/kanban-board.png" width="40%" alt="Kanban board">](docs/screenshots/kanban-board.png)
+
+### Create new application
+
+[<img src="docs/screenshots/new-application.png" width="30%" alt="Create new application">](docs/screenshots/new-application.png)
+
+### Application detail with reminders
+
+[<img src="docs/screenshots/application-detail.png" width="30%" alt="Application detail with reminders">](docs/screenshots/application-detail.png)
+
+### Calendar feed settings
+
+[<img src="docs/screenshots/calendar-feed.png" width="30%" alt="Calendar feed settings">](docs/screenshots/calendar-feed.png)
 
 ## Requirements
 
@@ -49,7 +69,7 @@ source env/bin/activate
 
 ```bash
 python -m venv env
-.venv\Scripts\Activate.ps1
+env\Scripts\Activate.ps1
 ```
 
 ### 3. Install dependencies
@@ -89,7 +109,8 @@ python manage.py runserver
 
 ## Method 2: Setup with Docker
 
-A simple Docker Compose setup is provided for development and demonstration. Navigate with the terminal to the root of this application where the Dockerfile resides (e.g. `cd $HOME/git/csm500-job-application-workflow`)
+A simple Docker Compose setup is provided for development and demonstration. Navigate with the terminal to the root 
+of this application where the `Dockerfile` and `docker-compoise.yaml` resides (e.g. `cd $HOME/git/csm500-job-application-workflow`)
 
 Start the application:
 
@@ -97,7 +118,8 @@ Start the application:
 docker compose up --build
 ```
 
-You can exit the container with CTRL+C. If you do not want to rebuild the container the next run, you can execute
+The Docker setup runs database migrations automatically and starts the Django development server.
+For later runs, if the image does not need to be rebuilt, use:
 
 ```bash
 docker compose up
@@ -109,35 +131,34 @@ Open the application in your browser:
 
 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
-As first step you will need to register an account.
+As a first step, register a user account through the web interface.
 
 ## Seeding Demo Data
 
-There is a set of demo data for this application. It is mandatory that you will create a user (step 7) firstly.
-Then for the Python venv installation run
+A synthetic demo dataset is provided for screenshots, screencasts, and manual testing.
+You must create a user account before running the demo data command.
+
+For the Python venv setup:
 
 `python manage.py seed_demo_data`
 
-and for Docker setup run
+For the Docker setup:
 
 `docker compose exec web python manage.py seed_demo_data`
 
-The command line prompt will list the available users, ask for which one to insert demo data and if data should be 
-cleared.
-
+The command lists available users, asks which user should receive the demo data, and asks whether existing demo data should be cleared.
 
 ## Running Tests
 
 Run the automated test suite with:
 
-For Python venv installation
+**Python venv**
 
 `python manage.py test`
 
-For Docker setup run
+**Docker**
 
 `docker compose exec web python manage.py test`
-
 
 The tests cover core functionality such as:
 
@@ -158,7 +179,7 @@ Create a user account or log in with an existing account.
 
 ### 2. Create a job application
 
-Use the New Application button on the board.
+Use the **New Application** button on the board.
 
 Typical fields include:
 * company name
@@ -207,7 +228,11 @@ Archived applications are removed from the active Kanban board and shown on a se
 
 ### 6. Calendar feed
 
-The application can provide a read-only iCalendar feed for open reminders. The feed can be managed through: User menu -> Calendar feed
+The application can provide a read-only iCalendar feed for open reminders. The feed can be managed through:
+
+```
+User menu -> Calendar feed
+```
 
 The feed URL can be reset or disabled. The feed is read-only and does not provide two-way calendar synchronisation.
 
@@ -223,6 +248,21 @@ The prototype is designed to avoid unnecessary external processing:
 * calendar feed access is protected by a random token
 * the feed token can be reset or disabled
 
+## Limitations
+
+This is an academic research prototype, not a production-ready platform.
+It does not include:
+
+* email or job portal integration
+* browser extension support
+* external AI/NLP extraction
+* secure file uploads
+* password reset or email verification
+* OAuth login or two-factor authentication
+* two-way calendar synchronisation
+* per-user timezone settings
+
+The focus is on state-based workflow tracking, event history, rule-based reminders, and privacy-aware calendar interoperability.
 
 ## Development Notes
 
@@ -249,7 +289,7 @@ TIME_ZONE = "Europe/London"
 
 Datetime values are stored timezone-aware by Django and displayed using the configured application timezone. The prototype currently uses a single application-wide timezone rather than per-user timezone preferences.
 The iCalendar feed exports reminder events in UTC, as expected by calendar clients. Calendar applications such as Apple Calendar, Google Calendar or Outlook will normally convert these UTC timestamps to the user's local calendar timezone automatically.
-For deployments in a different region, update TIME_ZONE in settings.py, for example:
+For deployments in a different region, update `TIME_ZONE` in `settings.py`, for example:
 
 ```python
 TIME_ZONE = "Europe/Berlin"
@@ -259,9 +299,9 @@ A future production version could allow users to configure their own timezone in
 
 ## Useful Commands
 
-*Note*: If you run the Docker variant, add `docker compose exec web` in front of the following commands, e.g. `docker compose exec web python manage.py makemigrations`.
+*Note*: If you run the Docker, add `docker compose exec web` in front of the following commands, for example `docker compose exec web python manage.py makemigrations`.
 
-run development server:
+Run development server:
 
 ```bash
 python manage.py runserver
@@ -285,10 +325,16 @@ Create superuser:
 python manage.py createsuperuser
 ```
 
-Seed reminder rules:
+Create default reminder rules:
 
 ```bash
-python manage.py seed_reminder_rules
+python manage.py create_default_reminder_rules
+```
+
+Seed demo data:
+
+```bash
+python manage.py seed_demo_data
 ```
 
 Run tests:
@@ -308,3 +354,7 @@ Change password of a registered user
 ```bash
 python manage.py changepassword <username>
 ```
+
+## License
+
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.

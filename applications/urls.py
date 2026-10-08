@@ -3,6 +3,9 @@ from . import views
 
 app_name = "applications"
 
+"""
+URL configuration for the job application tracker application.
+"""
 urlpatterns = [
     path("", views.KanbanBoardView.as_view(), name="kanban"),
     path("applications/new/", views.JobApplicationCreateView.as_view(), name="application_create"),
