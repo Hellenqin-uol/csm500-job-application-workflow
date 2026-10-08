@@ -127,11 +127,11 @@ As a first step, register a user account through the web interface.
 A synthetic demo dataset is provided for screenshots, screencasts, and manual testing.
 You must create a user account before running the demo data command.
 
-For the Python venv setup:
+**For the Python venv setup:**
 
 `python manage.py seed_demo_data`
 
-For the Docker setup:
+**For the Docker setup:**
 
 `docker compose exec web python manage.py seed_demo_data`
 
@@ -290,13 +290,13 @@ A future production version could allow users to configure their own timezone in
 
 *Note*: If you run the Docker, add `docker compose exec web` in front of the following commands, for example `docker compose exec web python manage.py makemigrations`.
 
-Run development server:
+**Run development server:**
 
 ```bash
 python manage.py runserver
 ```
 
-Run migrations:
+**Run migrations:**
 
 ```bash
 python manage.py migrate
