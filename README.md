@@ -320,7 +320,8 @@ python manage.py createsuperuser
 python manage.py create_default_reminder_rules
 ```
 
-Default reminder rules are created automatically during database migration. This command is mainly useful during development if the rules in `a`pplications/default_reminder_rules.py` are changed, 
+Default reminder rules are created automatically during database migration. 
+This command is mainly useful during development if the rules in `applications/default_reminder_rules.py` are changed, 
 or if the default rules were deleted manually and should be recreated. The command is idempotent and can be run multiple times.
 
 **Seed demo data:**
