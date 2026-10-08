@@ -84,24 +84,7 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-### 5. Load default reminder rules
-
-The application uses predefined reminder rules for generating reminders based on workflow states.
-Run:
-
-```bash
-python manage.py create_default_reminder_rules
-```
-
-This creates or updates the default rule set, for example:
-* Review job before application deadline
-* Submit application before deadline
-* Send follow-up after applying
-* Prepare for interview
-* Send post-interview follow-up
-* Review offer before offer deadline
-
-### 6. Start the development server
+### 5. Start the development server
 
 ```bash
 python manage.py runserver
@@ -124,6 +107,12 @@ For later runs, if the image does not need to be rebuilt, use:
 ```bash
 docker compose up
 ```
+
+The server runs inside the container on `0.0.0.0:8000`, but the application should be opened from the host machine at:
+
+http://127.0.0.1:8000/
+
+If the terminal displays `http://0.0.0.0:8000/`, do not use that URL directly in the browser.
 
 ## Access application
 
@@ -313,43 +302,46 @@ Run migrations:
 python manage.py migrate
 ```
 
-Create migrations:
+**Create migrations:**
 
 ```bash
 python manage.py makemigrations
 ```
 
-Create superuser:
+**Create superuser:**
 
 ```bash
 python manage.py createsuperuser
 ```
 
-Create default reminder rules:
+**Create or update default reminder rules:**
 
 ```bash
 python manage.py create_default_reminder_rules
 ```
 
-Seed demo data:
+Default reminder rules are created automatically during database migration. This command is mainly useful during development if the rules in `a`pplications/default_reminder_rules.py` are changed, 
+or if the default rules were deleted manually and should be recreated. The command is idempotent and can be run multiple times.
+
+**Seed demo data:**
 
 ```bash
 python manage.py seed_demo_data
 ```
 
-Run tests:
+**Run tests:**
 
 ```bash
 python manage.py test
 ```
 
-List all registered usernames
+**List all registered usernames**
 
 ```bash
 python manage.py shell -c "from django.contrib.auth import get_user_model; print(list(get_user_model().objects.values_list('username', flat=True)))"
 ```
 
-Change password of a registered user
+**Change password of a registered user**
 
 ```bash
 python manage.py changepassword <username>
